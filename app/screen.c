@@ -1250,7 +1250,7 @@ static __attribute__((noinline, cold, minsize)) void boot_draw(void)
         paint_fill(225, 11, 6, 3, TEXT);
         text(72, 60, "6210", 4, TEXT, BACK);
         text(60, 98, "DRUM PETER", 2, TEXT, BACK);
-        text(84, 122, "808 909 303", 1, DIM, BACK);
+        text(75, 122, "808 909 606 707", 1, DIM, BACK);
         text(96, 198, "MENU", 2, TEXT, BACK);
         text((240 - 6 * (sizeof "6210 " DP_VERSION " / FM1 OPEN " FM1_RELEASE_VERSION - 1)) / 2, 226,
              "6210 " DP_VERSION " / FM1 OPEN " FM1_RELEASE_VERSION, 1, DIM, BACK);

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>6210 Drum Peter — 808 + 909 + 303 drum machine firmware for the M-VAVE FM-1</title>
-<meta name="description" content="6210 Drum Peter turns the M-VAVE FM-1 into an 808 + 909 + 303 drum machine with TR-style step keys and button lights that blink with a purpose. Free and open source.">
+<title>6210 Drum Peter — 808, 909, 606 and 707 drum machine firmware for the M-VAVE FM-1</title>
+<meta name="description" content="6210 Drum Peter turns the M-VAVE FM-1 into a drum machine with 808, 909, 606 and 707 kits, eight built-in songs, TR-style step keys and button lights that blink with a purpose. Free and open source.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -89,9 +89,9 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
 <header class="hero">
   <div class="wrap">
     <div>
-      <p class="kicker">FIRMWARE · M-VAVE FM-1 · BETA 0.1</p>
+      <p class="kicker">FIRMWARE · M-VAVE FM-1 · BETA 0.2</p>
       <h1>6210<small>DRUM PETER</small></h1>
-      <p class="lead">One drum machine, one job: special tasks for my brother. 6210 turns the FM-1 into an 808 + 909 + 303 beatbox with TR-style step keys, a two-tone phone-style screen and button lights that blink with a purpose.</p>
+      <p class="lead">One drum machine, one job: special tasks for my brother. 6210 turns the FM-1 into a drum machine with 808, 909, 606 and 707 kits, eight songs ready to play, TR-style step keys, a two-tone phone-style screen and button lights that blink with a purpose.</p>
       <div class="actions">
         <a class="btn primary" href="install/">INSTALL ›</a>
         <a class="btn" href="manual/">MANUAL</a>
@@ -99,7 +99,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
       </div>
     </div>
     <div class="device" aria-label="The 6210 DRUM page with the step keys under it">
-      <img src="assets/drum-playing.png" width="480" height="480" alt="6210 DRUM page: track 1 with the 808 engine at 120 BPM, eleven drum rows from BD to CH, sixteen steps each, the playhead on step 5">
+      <img src="assets/drum-playing.png" width="480" height="480" alt="6210 DRUM page: track 1, the 808 kit, playing song 1 at 132 BPM, eleven drum rows from BD to CH, the playhead running over the steps">
       <div class="keys" id="keys" aria-hidden="true"></div>
       <p class="note">Real screen, rendered by the firmware's own code in the host test. The row under it is the 16 step keys.</p>
     </div>
@@ -112,15 +112,15 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
     <h2>What's inside</h2>
     <p class="sub">Everything a drum machine should do first, on the FM-1's own keys, knobs and screen. It runs on the FM1 Open V14 engine, so timing stays sample accurate.</p>
     <div class="grid3">
-      <div class="card"><h3>808 kit</h3><p>Track 1: eleven drums (BD, SD, three toms, rim, clap, cowbell, cymbal, open and closed hat) on the DRUM 808 engine.</p></div>
-      <div class="card"><h3>909 style kit</h3><p>Track 2: the same engine voiced tighter, brighter and harder: short punchy kick, snappy snare, crisp hats.</p></div>
-      <div class="card"><h3>303 acid</h3><p>Track 3: the BASS 303 engine with an acid line ready to go. Cutoff on K4, accents on velocity.</p></div>
+      <div class="card"><h3>Four kits</h3><p>Track 1 808, track 2 909, track 3 606, track 4 707. Eleven drums each: BD, SD, three toms, rim, clap, cowbell, cymbal, open and closed hat.</p></div>
+      <div class="card"><h3>Eight songs</h3><p>Hypno, hard techno, electro, house, minimal, breaks, dub and boom bap, built in. Song 1 is loaded the first time you switch on.</p></div>
+      <div class="card"><h3>Project menu</h3><p><b>SAVE</b> asks what you want: save, load from a named list, or start a new empty project after a YES / NO question.</p></div>
       <div class="card"><h3>TR step keys</h3><p>The 16 white keys are the steps of the selected drum. Black keys pick a drum and play it.</p></div>
       <div class="card"><h3>Blink codes</h3><p>Every light has a rhythm: playhead, beat, record, unsaved, muted, roll. You can read the machine without looking at the screen.</p></div>
       <div class="card"><h3>Velocity and chance</h3><p>K2 sets the step's velocity (accent at 120 and up), K3 gives it a chance to play from 12% to 100%.</p></div>
-      <div class="card"><h3>Up to 64 steps</h3><p>Each of the eight tracks loops over 16, 32, 48 or 64 steps. OCT − and + page through them.</p></div>
+      <div class="card"><h3>Up to 64 steps</h3><p>Each track loops over 16, 32, 48 or 64 steps. OCT − and + page through them.</p></div>
       <div class="card"><h3>Roll</h3><p>ARP on a drum track is a drum repeat: hold a drum key and it rolls. Rate, swing and hold on the ARP page.</p></div>
-      <div class="card"><h3>Mixer</h3><p>Mute and solo on the keys, four volumes on the knobs. A muted track keeps double flashing so you never forget it.</p></div>
+      <div class="card"><h3>Mixer</h3><p>Mute and solo on the keys, the four kit volumes on the knobs. A muted track keeps double flashing so you never forget it.</p></div>
     </div>
   </div>
 </section>
@@ -130,12 +130,15 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
     <h2>Screens</h2>
     <p class="sub">240 × 240 pixels, two shades of green, no phone maker's logo. All pictures below come from the firmware's own drawing code.</p>
     <div class="shots">
-      <figure><img src="assets/boot.png" width="480" height="480" loading="lazy" alt="Start screen: 6210 DRUM PETER, 808 909 303, signal and battery bars filling up"><figcaption><b>START</b> Signal and battery bars fill while the engine loads.</figcaption></figure>
-      <figure><img src="assets/drum.png" width="480" height="480" loading="lazy" alt="DRUM page with the 808 kit: kick on every beat, rim and closed hats"><figcaption><b>DRUM · 808</b> Eleven rows, sixteen steps. The selected drum is inverted.</figcaption></figure>
-      <figure><img src="assets/drum-909.png" width="480" height="480" loading="lazy" alt="DRUM page on track 2: claps on 2 and 4, open hats on the off-beats"><figcaption><b>DRUM · 909 STYLE</b> Claps on 2 and 4, open hats off the beat.</figcaption></figure>
-      <figure><img src="assets/acid.png" width="480" height="480" loading="lazy" alt="DRUM page on track 3 with the 303: one row of sixteen note steps"><figcaption><b>ACID 303</b> Melodic tracks show one row of notes; K1 sets the pitch.</figcaption></figure>
-      <figure><img src="assets/edit-held.png" width="480" height="480" loading="lazy" alt="EDIT held: a box saying SAVE loads the 6210 kit"><figcaption><b>EDIT HELD</b> SAVE loads the 6210 kit, PRESETS changes the engine.</figcaption></figure>
-      <figure><img src="assets/mixer.png" width="480" height="480" loading="lazy" alt="Mixer: mute and solo buttons for eight tracks, tracks 6 and 7 muted"><figcaption><b>MIXER</b> Keys 1–8 mute, 9–16 solo.</figcaption></figure>
+      <figure><img src="assets/boot.png" width="480" height="480" loading="lazy" alt="Start screen: 6210 DRUM PETER, 808 909 606 707, signal and battery bars filling up"><figcaption><b>START</b> Signal and battery bars fill while the engine loads.</figcaption></figure>
+      <figure><img src="assets/drum.png" width="480" height="480" loading="lazy" alt="DRUM page, track 1 with the 808 kit: rim shots and a low tom in song 1"><figcaption><b>808</b> Eleven rows, sixteen steps. The selected drum is inverted.</figcaption></figure>
+      <figure><img src="assets/kit-909.png" width="480" height="480" loading="lazy" alt="DRUM page, track 2 with the 909 kit: kick on every beat and open hats off the beat"><figcaption><b>909</b> Four on the floor with open hats off the beat.</figcaption></figure>
+      <figure><img src="assets/kit-606.png" width="480" height="480" loading="lazy" alt="DRUM page, track 3 with the 606 kit: closed hats on every sixteenth"><figcaption><b>606</b> Sixteenth hats with accents.</figcaption></figure>
+      <figure><img src="assets/kit-707.png" width="480" height="480" loading="lazy" alt="DRUM page, track 4 with the 707 kit: claps on 2 and 4"><figcaption><b>707</b> Claps on 2 and 4.</figcaption></figure>
+      <figure><img src="assets/menu.png" width="480" height="480" loading="lazy" alt="Project menu: 1 save project, 2 load project, 3 new project"><figcaption><b>SAVE MENU</b> Save, load or start new.</figcaption></figure>
+      <figure><img src="assets/confirm.png" width="480" height="480" loading="lazy" alt="Clear the current project? Saved slots stay. YES and NO"><figcaption><b>NEW PROJECT</b> Asks YES or NO first. Saved slots are not touched.</figcaption></figure>
+      <figure><img src="assets/songs.png" width="480" height="480" loading="lazy" alt="Load project list: the eight 6210 songs from HYPNO 132 to BOOM BAP 90"><figcaption><b>LOAD</b> A named list of your 16 slots and the 8 songs.</figcaption></figure>
+      <figure><img src="assets/mixer.png" width="480" height="480" loading="lazy" alt="Mixer with mute and solo buttons for eight tracks"><figcaption><b>MIXER</b> Keys 1–8 mute, 9–16 solo.</figcaption></figure>
     </div>
   </div>
 </section>
@@ -170,7 +173,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
       <li><div><h3>Back up</h3><p>Export the projects, voices and samples you want to keep.</p></div></li>
       <li><div><h3>Connect</h3><p>Switch the FM-1 on and plug it straight into the computer with a USB data cable.</p></div></li>
       <li><div><h3>Install</h3><p>Open the <a href="install/">installer page</a>, press START and follow it. Coming from stock V15, enable force flash once.</p></div></li>
-      <li><div><h3>Play</h3><p>The FM-1 restarts into 6210. Press <kbd>PLAY</kbd>: on an empty project the 6210 kit is already loaded.</p></div></li>
+      <li><div><h3>Play</h3><p>The FM-1 restarts into 6210. Press <kbd>PLAY</kbd>: on an empty project song 1 is already loaded.</p></div></li>
     </ol>
     <p style="margin-top:24px"><a class="btn primary" href="install/">OPEN THE INSTALLER ›</a></p>
   </div>
@@ -179,12 +182,12 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
 <section id="limits">
   <div class="wrap">
     <h2>Good to know</h2>
-    <div class="warn"><strong>BETA 0.1.</strong> 6210 builds cleanly and passes its host tests, which run the real screen code. It has not been tested on many physical FM-1s yet. Back up before you install.</div>
+    <div class="warn"><strong>BETA 0.2.</strong> 6210 builds cleanly and passes its host tests, which run the real screen code. It has not been tested on many physical FM-1s yet. Back up before you install.</div>
     <div class="grid2" style="margin-top:18px">
-      <div class="card"><h3>Engine limits</h3><p>The sequencer and the sound engines are M-VAVE's FM1 Open V14 library. Tracks loop over 16, 32, 48 or 64 steps, and there are eight tracks.</p></div>
-      <div class="card"><h3>The 909 kit</h3><p>There is no separate 909 engine. Track 2 is the 808 engine with 909-style settings, saved with your project like any sound.</p></div>
+      <div class="card"><h3>Engine limits</h3><p>The sequencer and the sound engine are M-VAVE's FM1 Open V14 library. Four drum tracks, each looping over 16, 32, 48 or 64 steps; tracks 5–8 are off.</p></div>
+      <div class="card"><h3>909, 606 and 707</h3><p>There is one drum engine, the DRUM 808. The 909, 606 and 707 kits are settings of it, saved with your project like any sound.</p></div>
       <div class="card"><h3>Lights are on or off</h3><p>The panel cannot dim a light, so dim and bright states are shown as rhythms instead.</p></div>
-      <div class="card"><h3>Everything else stays</h3><p>The step editor, sound editors, FX, mixer, projects, MIDI and the arpeggiator of FM1 Open are all still there.</p></div>
+      <div class="card"><h3>Drums only</h3><p>The DX7, 303, PSG and pluck editors were removed to make room. The step editor, drum sound editor, FX, mixer, MIDI and the arpeggiator stay.</p></div>
     </div>
   </div>
 </section>

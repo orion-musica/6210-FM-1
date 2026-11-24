@@ -2,12 +2,12 @@
 
 # 6210 Drum Peter
 
-**An 808 + 909 + 303 drum machine firmware for the M-VAVE FM-1, with TR-style step keys and button lights that blink with a purpose.**
+**A drum machine firmware for the M-VAVE FM-1: 808, 909, 606 and 707 kits, eight built-in songs, TR-style step keys and button lights that blink with a purpose.**
 
 [![build](https://github.com/orion-musica/6210-FM-1/actions/workflows/build.yml/badge.svg)](https://github.com/orion-musica/6210-FM-1/actions/workflows/build.yml)
 ![license](https://img.shields.io/badge/license-GPL--3.0%20%2B%20SDK%20exception-43523d)
 ![device](https://img.shields.io/badge/device-M--VAVE%20FM--1-43523d)
-![status](https://img.shields.io/badge/status-beta%200.1-c7a800)
+![status](https://img.shields.io/badge/status-beta%200.2-c7a800)
 
 [**Website & web installer**](https://orion-musica.github.io/6210-FM-1/) ·
 [Manual](https://orion-musica.github.io/6210-FM-1/manual/) ·
@@ -16,7 +16,7 @@
 [Build](#building-from-source) ·
 [License](#license)
 
-<img src="docs/assets/drum-playing.png" width="360" alt="6210 DRUM page: track 1 with the 808 engine at 120 BPM, eleven drum rows and sixteen steps, the playhead on step 5">
+<img src="docs/assets/drum-playing.png" width="360" alt="6210 DRUM page: track 1, the 808 kit, playing song 1 at 132 BPM, eleven drum rows and sixteen steps">
 
 </div>
 
@@ -46,26 +46,26 @@
 One drum machine, one job: special tasks for my brother. 6210 is a fork of
 [3310](https://github.com/orion-musica/3310_FM-1), itself built on M-VAVE's official
 [FM1 Open V14](https://github.com/m-vave/fm1_open). It keeps the two-tone phone-style screen of 3310
-and replaces its ARRANGE page with a classic drum machine page: one row per drum, sixteen steps, the
-white keys as step buttons and the black keys as drum pads.
+and turns the instrument into a drum machine only: four kits on four tracks, one row per drum,
+sixteen steps, the white keys as step buttons and the black keys as drum pads.
 
 The sequencer and the sound engines are M-VAVE's FM1 Open library, so timing stays sample accurate.
-6210 changes the app layer only: the DRUM page, the LED logic, the start screen and the kit setup.
+6210 changes the app layer only: the DRUM page, the LED logic, the start screen, the kits, the songs and the
+project menu. The DX7, 303, PSG and pluck editors of FM1 Open are compiled out to make room.
 
 ## Features
 
 | | |
 |---|---|
-| **808 kit** | Track 1: eleven drums on the DRUM 808 engine (BD, SD, LT, MT, HT, RIM, CLAP, COW, CYM, OH, CH). |
-| **909 style kit** | Track 2: the same engine voiced shorter, brighter and harder. |
-| **303 acid** | Track 3: the BASS 303 engine with a starter acid line. |
+| **Four kits** | T1 808, T2 909, T3 606, T4 707: eleven drums each (BD, SD, LT, MT, HT, RIM, CLAP, COW, CYM, OH, CH). |
+| **Eight songs** | Hypno, hard techno, electro, house, minimal, breaks, dub and boom bap; song 1 loads on first start. |
+| **Project menu** | SAVE opens save / load / new; new project asks YES or NO; load shows a named list. |
 | **TR step keys** | 16 white keys = 16 steps of the selected drum; black keys pick and play drums. |
 | **Velocity and chance** | Per step, on K2 and K3. Accent from velocity 120. |
 | **Up to 64 steps** | 16 / 32 / 48 / 64 steps per track, paged with OCT − / +. |
 | **Roll** | The FM1 Open drum repeat on ARP. |
 | **Blink codes** | Every panel light has a rhythm that tells you the machine's state. |
-| **Auto kit** | An empty project becomes the 6210 kit on start; EDIT + SAVE loads it any time. |
-| **Everything else** | The step editor, sound editors, FX, mixer, projects, MIDI and arpeggiator of FM1 Open stay. |
+| **Kept from FM1 Open** | Step editor, drum sound editor, FX, mixer, MIDI, arpeggiator, 16 project slots. |
 
 ## Installation
 
@@ -80,15 +80,14 @@ as `6210.fwsc`, with its SHA-256. To go back, open the installer and choose **Re
 
 ## Quick start
 
-1. Switch on. After the start screen the **DRUM** page opens. On an empty project the 6210 kit is loaded
-   (`6210 KIT READY`).
+1. Switch on. After the start screen the **DRUM** page opens. On an empty project song 1 is loaded
+   (`SONG 1 LOADED`).
 2. Press **PLAY**.
-3. Press a **black key** to pick a drum (first black key = kick, then snare, toms, rim, clap, cowbell,
-   cymbal, open hat, closed hat).
-4. Press **white keys** to set and clear that drum's steps.
+3. Turn **SELECT** for the four kits: 808, 909, 606, 707.
+4. Press a **black key** to pick a drum (first black key = kick, then snare, toms, rim, clap, cowbell,
+   cymbal, open hat, closed hat), and **white keys** to set and clear its steps.
 5. Turn **K2** for the velocity of the step you touched last, **K3** for its chance, **K4** to tune the drum.
-6. Turn **SELECT** for tracks 2 (909 style) and 3 (303).
-7. Press **SAVE** to keep it.
+6. Press **SAVE** for the project menu: 1 save, 2 load (your slots and the 8 songs), 3 new project.
 
 The [manual](https://orion-musica.github.io/6210-FM-1/manual/) explains every control and page.
 
@@ -98,19 +97,20 @@ On the DRUM page:
 
 | Control | Action |
 |---|---|
-| `SELECT` | Track 1–8 |
+| `SELECT` | Track 1–4: 808, 909, 606, 707 |
 | `ALGORITHM` | Track length 16 / 32 / 48 / 64 |
 | `PRESETS` | Kit / program of the track |
-| `K1` | Drum (drum tracks) or note (melodic tracks) |
+| `K1` | Drum |
 | `K2` | Velocity of the edited step |
 | `K3` | Chance of the edited step (12–100 %) |
-| `K4` | Drum tune · 303 cutoff · DX7 volume |
+| `K4` | Drum tune |
 | White keys | Steps 1–16 of the page |
-| Black keys | Pick and play a drum (melodic tracks: play notes) |
+| Black keys | Pick and play a drum |
 | `OCT −` / `OCT +` | Previous / next 16 steps |
-| `EDIT` tap / hold | Sound editor / kit menu (`SAVE` = load the 6210 kit, `PRESETS` = engine) |
+| `EDIT` | Sound editor of the selected drum |
+| `SAVE` | Project menu: save · load · new (asks YES / NO) |
 | `SEQ` | Full step editor (swing, click, count-in, MIDI clock, locks) |
-| `HOME` | Project and preset browser |
+| `HOME` | Load list (your slots and the 8 songs) |
 | `GLO` | Mixer (keys 1–8 mute, 9–16 solo, K1–K4 volumes) |
 | `ARP` | Roll on / off; hold for its settings |
 | `HOME` + `SEQ` | Tap tempo |
@@ -136,12 +136,14 @@ The FM-1's lights are on or off, so every state has a rhythm instead of a bright
 
 ## Limits
 
-- **Engine.** The sequencer and sound engines are the closed FM1 Open V14 library: eight tracks, loops of
-  16, 32, 48 or 64 steps, velocity and chance per step (velocity is shared by all drums on a step).
-- **909.** There is no separate 909 engine. Track 2 is the 808 engine with 909-style settings.
+- **Engine.** The sequencer and sound engine are the closed FM1 Open V14 library: four drum tracks (5–8 are
+  off), loops of 16, 32, 48 or 64 steps, velocity and chance per step (velocity is shared by all drums on a step).
+- **Kits.** There is one drum engine, the DRUM 808. The 909, 606 and 707 kits are settings of it.
+- **Slots.** 16 project slots, as in FM1 Open: the Flash user area is full (projects, sample bank, voice
+  library), so more slots would cost sample memory. Export projects to the computer to keep more.
 - **Lights.** No dimming on the panel, hence the blink codes.
-- **Flash.** The application has to fit in 453,921 bytes. 0.1 BETA uses 452,968.
-- **Ideas not in 0.1** (from the design): ghost notes, hypno drift, dark-club VU on the keys, stutter.
+- **Flash.** The application has to fit in 453,921 bytes. Removing the synth editors in 0.2 freed about 7 KB.
+- **Ideas not in 0.2** (from the design): ghost notes, hypno drift, dark-club VU on the keys, stutter.
   They need more flash space than is left.
 
 ## Building from source
@@ -155,7 +157,7 @@ Every push to `main` runs [`.github/workflows/build.yml`](.github/workflows/buil
 2. **build** (Windows): installs the JieLi toolchain 2.5.3, builds the firmware, the web installer and the
    site, and uploads them as the `6210` artifact.
 3. **pages**: publishes `docs/` to GitHub Pages (public repository, Pages source set to *GitHub Actions*).
-4. **release**: on a tag such as `v0.1.0-beta`, publishes a GitHub Release with `6210.fwsc`.
+4. **release**: on a tag such as `v0.2.0-beta`, publishes a GitHub Release with `6210.fwsc`.
 
 ### On Windows
 
@@ -186,7 +188,7 @@ Test scripts are plain text; see the commands at the top of [`tools/host/harness
 
 | Path | Contents |
 |---|---|
-| `app/drum.inc` | **6210:** DRUM page, keyboard, kit setup |
+| `app/drum.inc` | **6210:** DRUM page, keyboard, kits, songs, project menu |
 | `app/screen.c` | Screen and panel code (6210 LED blink codes, start screen, hooks) |
 | `app/`, `web/`, `third_party/` | FM1 Open application and browser engine sources |
 | `sdk/` | FM1 Open SDK: binary engine, build and packaging scripts |

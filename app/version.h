@@ -5,6 +5,6 @@
 #define FM1_RELEASE_VERSION "V14"
 #define FM1_UPDATE_PRODUCT "FM-1_8000014"
 /* 6210 Drum Peter release, shown on the start screen. */
-#define DP_VERSION "0.1 BETA"
+#define DP_VERSION "0.2 BETA"
 
 #endif

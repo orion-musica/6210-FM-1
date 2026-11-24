@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>6210 Drum Peter — manual</title>
-<meta name="description" content="The complete manual for 6210 Drum Peter, drum machine firmware for the M-VAVE FM-1: panel, DRUM page, kit, step editing, roll, mixer, blink codes and troubleshooting.">
+<meta name="description" content="The complete manual for 6210 Drum Peter, drum machine firmware for the M-VAVE FM-1: panel, DRUM page, the 808/909/606/707 kits, songs, project menu, step editing, roll, mixer, blink codes and troubleshooting.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -59,8 +59,8 @@ footer{border-top:3px solid var(--ink);padding:24px;font-size:14px;color:var(--d
     <li><a href="#panel">The panel</a></li>
     <li><a href="#drum">The DRUM page</a></li>
     <li><a href="#steps">Writing steps</a></li>
-    <li><a href="#melodic">303 and melodic tracks</a></li>
-    <li><a href="#kit">The 6210 kit</a></li>
+    <li><a href="#kit">Kits</a></li>
+    <li><a href="#songs">Songs</a></li>
     <li><a href="#length">Length and pages</a></li>
     <li><a href="#play">Play, record, tempo</a></li>
     <li><a href="#roll">Roll</a></li>
@@ -74,45 +74,45 @@ footer{border-top:3px solid var(--ink);padding:24px;font-size:14px;color:var(--d
 </aside>
 <main>
 <h1>Manual</h1>
-<p class="lead">6210 Drum Peter 0.1 BETA for the M-VAVE FM-1. Built on FM1 Open V14.</p>
+<p class="lead">6210 Drum Peter 0.2 BETA for the M-VAVE FM-1. Built on FM1 Open V14.</p>
 <div class="box"><strong>Names used here.</strong> Buttons are written like <kbd>PLAY</kbd>. The seven encoders are <kbd>SELECT</kbd>, <kbd>ALGORITHM</kbd>, <kbd>PRESETS</kbd> and <kbd>K1</kbd>–<kbd>K4</kbd> (the four knobs under the screen). The keyboard has 16 white and 11 black keys.</div>
 
 <h2 id="start">1. First start</h2>
 <p>After installing, the FM-1 shows the 6210 start screen for about a second and then opens the <b>DRUM</b> page. Any key or knob skips the start screen.</p>
-<p>If the project in memory is empty (no notes on any track), 6210 turns it into the <a href="#kit">6210 kit</a> and shows <code>6210 KIT READY</code>: an 808 groove on track 1, a 909-style groove on track 2 and an acid line on track 3. Press <kbd>PLAY</kbd> to hear it. A project that already has notes is never changed.</p>
-<p>The kit is not written to memory until you save it with <kbd>SAVE</kbd>. Until then the SAVE light blinks once a second.</p>
+<p>If the project in memory is empty (no notes on any track), 6210 loads <a href="#songs">song 1</a>, HYPNO 132, and shows <code>SONG 1 LOADED</code>. Press <kbd>PLAY</kbd> to hear it. A project that already has notes is never changed; the FM-1 always starts with the project you saved last.</p>
+<p>Nothing is written to memory until you save with <kbd>SAVE</kbd>. Until then the SAVE light blinks once a second.</p>
 
 <h2 id="panel">2. The panel</h2>
 <div class="table"><table>
 <thead><tr><th scope="col">Control</th><th scope="col">On the DRUM page</th><th scope="col">Elsewhere</th></tr></thead>
 <tbody>
-<tr><td><kbd>SELECT</kbd></td><td>Track 1–8</td><td>Track, or the page's own list</td></tr>
+<tr><td><kbd>SELECT</kbd></td><td>Track 1–4 (808, 909, 606, 707)</td><td>Track, or the page's own list</td></tr>
 <tr><td><kbd>ALGORITHM</kbd></td><td>Track length 16 / 32 / 48 / 64</td><td>Sub-page on the step editor</td></tr>
 <tr><td><kbd>PRESETS</kbd></td><td>Kit or program of the track</td><td>Step cursor, project slot</td></tr>
-<tr><td><kbd>K1</kbd></td><td>Drum (drum tracks) or note (melodic)</td><td>Page parameters</td></tr>
+<tr><td><kbd>K1</kbd></td><td>Drum</td><td>Page parameters</td></tr>
 <tr><td><kbd>K2</kbd></td><td>Velocity of the edited step</td><td>Page parameters</td></tr>
 <tr><td><kbd>K3</kbd></td><td>Chance of the edited step</td><td>Page parameters</td></tr>
-<tr><td><kbd>K4</kbd></td><td>Tune of the drum, 303 cutoff, or DX7 volume</td><td>Page parameters</td></tr>
+<tr><td><kbd>K4</kbd></td><td>Tune of the drum</td><td>Page parameters</td></tr>
 <tr><td>White keys</td><td>The 16 steps of the selected drum</td><td>Notes, mute/solo, slots</td></tr>
-<tr><td>Black keys</td><td>Pick and play a drum (or play notes)</td><td>Notes, editor shortcuts</td></tr>
+<tr><td>Black keys</td><td>Pick and play a drum</td><td>Drums, editor shortcuts</td></tr>
 <tr><td><kbd>OCT −</kbd> <kbd>OCT +</kbd></td><td>Previous / next 16 steps</td><td>Octave of the keyboard</td></tr>
 <tr><td><kbd>SEQ</kbd></td><td>Opens the full step editor</td><td>Back to DRUM</td></tr>
 <tr><td><kbd>HOME</kbd></td><td>Project and preset browser</td><td>Back to DRUM</td></tr>
-<tr><td><kbd>EDIT</kbd></td><td>Tap: sound editor. Hold: <a href="#kit">kit menu</a></td><td>Sound editor</td></tr>
+<tr><td><kbd>EDIT</kbd></td><td>Sound editor of the selected drum (hold: every parameter)</td><td>Sound editor</td></tr>
 <tr><td><kbd>ENV</kbd> <kbd>LFO</kbd> <kbd>SCL</kbd></td><td colspan="2">Envelope, LFO and advanced sound pages</td></tr>
 <tr><td><kbd>FX</kbd></td><td colspan="2">Reverb and delay sends, effect settings, tempo and delay sync</td></tr>
 <tr><td><kbd>GLO</kbd></td><td colspan="2">Tap: mixer. Hold: mixer while held</td></tr>
 <tr><td><kbd>ARP</kbd></td><td colspan="2">Tap: roll / arpeggiator on or off. Hold: its settings</td></tr>
-<tr><td><kbd>SAVE</kbd></td><td colspan="2">Save the project</td></tr>
+<tr><td><kbd>SAVE</kbd></td><td colspan="2"><a href="#projects">Project menu</a>: save, load, new</td></tr>
 <tr><td><kbd>PLAY</kbd> <kbd>REC</kbd></td><td colspan="2">Start / stop, record</td></tr>
 </tbody></table></div>
 
 <h2 id="drum">3. The DRUM page</h2>
 <figure><img src="../assets/drum-playing.png" width="480" height="480" alt="DRUM page: header with T1 808 and 120 BPM, eleven drum rows, the playhead on step 5"><figcaption>The DRUM page while playing. The outlined column is the playhead.</figcaption></figure>
 <ul>
-<li><b>Header:</b> track number, the engine of the track (808, SMP, 303, DX7, PSG, PLK; grey when the track is muted), tempo, a <code>*</code> when there are unsaved edits, and a square that fills on every beat.</li>
+<li><b>Header:</b> track number, the kit of the track (808, 909, 606, 707; grey when the track is muted), tempo, a <code>*</code> when there are unsaved edits, and a square that fills on every beat.</li>
 <li><b>Title line:</b> the full name of the selected drum, the number of the edited step, and four boxes for the four 16-step pages. The filled box is the page you see, the dot shows the page that is playing, outlined boxes are past the track's length.</li>
-<li><b>Grid:</b> one row per drum (11 on the 808 engine, 8 on the sampler). Dark cells play. The selected drum's label is inverted; any label flashes when its drum plays. The small bar marks the step you edited last.</li>
+<li><b>Grid:</b> one row per drum, eleven rows. Dark cells play. The selected drum's label is inverted; any label flashes when its drum plays. The small bar marks the step you edited last.</li>
 <li><b>Knobs:</b> the four values K1–K4 control. The bottom line shows hints and messages.</li>
 </ul>
 
@@ -128,20 +128,34 @@ footer{border-top:3px solid var(--ink);padding:24px;font-size:14px;color:var(--d
 <h3>Tune</h3>
 <p><kbd>K4</kbd> tunes the selected drum. For every other drum setting (decay, tone, snappy, drive, pan…) tap <kbd>EDIT</kbd>; see <a href="#sound">Sound editing</a>.</p>
 
-<h2 id="melodic">5. 303 and melodic tracks</h2>
-<figure><img src="../assets/acid.png" width="480" height="480" alt="DRUM page on track 3 with the 303 engine: one NOTE row with ten set steps"><figcaption>Track 3 with the 303: one NOTE row.</figcaption></figure>
-<p>On a 303, DX7, PSG or pluck track the grid has one row, NOTE. White keys set and clear steps with the last note you played. Black keys play notes; <kbd>OCT</kbd> pages steps here too, so use the step editor (<kbd>SEQ</kbd>) to change octaves and chords.</p>
-<p><kbd>K1</kbd> changes the pitch of the edited step (or of the next one you set), <kbd>K2</kbd> velocity (accent on the 303 from 120), <kbd>K3</kbd> chance and <kbd>K4</kbd> the 303 cutoff (DX7: track volume). Resonance, envelope, decay, slide and drive are in the 303 sound editor (<kbd>EDIT</kbd>).</p>
+<h2 id="kit">5. Kits</h2>
+<p>6210 has four drum tracks, one kit each. <kbd>SELECT</kbd> moves between them; the header shows the kit.</p>
+<div class="table"><table>
+<thead><tr><th scope="col">Track</th><th scope="col">Kit</th><th scope="col">Character</th></tr></thead>
+<tbody>
+<tr><td>T1</td><td>808</td><td>Deep kick, the classic engine settings</td></tr>
+<tr><td>T2</td><td>909</td><td>Short punchy kick, bright snappy snare, crisp hats</td></tr>
+<tr><td>T3</td><td>606</td><td>Small, high and dry</td></tr>
+<tr><td>T4</td><td>707</td><td>Round, punchy and clean</td></tr>
+</tbody></table></div>
+<figure><img src="../assets/kit-909.png" width="480" height="480" alt="DRUM page on track 2 with the 909 kit"><figcaption>Track 2, the 909 kit.</figcaption></figure>
+<p>All four kits use the FM1 Open DRUM 808 engine; the 909, 606 and 707 are settings of it. Change any drum with <kbd>EDIT</kbd>: your changes are saved with the project. Tracks 5–8 are switched off in 6210.</p>
 
-<h2 id="kit">6. The 6210 kit</h2>
-<p>Hold <kbd>EDIT</kbd> on the DRUM page. A box opens:</p>
-<figure><img src="../assets/edit-held.png" width="480" height="480" alt="EDIT HELD box: SAVE loads the 6210 kit"><figcaption>EDIT held.</figcaption></figure>
-<ul>
-<li><kbd>EDIT</kbd> + <kbd>SAVE</kbd>: load the 6210 kit. Tracks 1–3 are cleared and set up again: <b>T1</b> DRUM 808, <b>T2</b> DRUM 808 with 909-style settings, <b>T3</b> BASS 303, each with a 16-step starter pattern. Tracks 4–8 are not touched. <kbd>HOME</kbd> + <kbd>SAVE</kbd> undoes it.</li>
-<li><kbd>EDIT</kbd> + <kbd>PRESETS</kbd>: choose another engine for the track (DX7, 303, 808, PSG, pluck, sampler). Confirm with <kbd>SAVE</kbd>.</li>
-<li>Release <kbd>EDIT</kbd> without doing anything: the sound editor opens, as on the original firmware.</li>
-</ul>
-<div class="box">The 909-style kit is the 808 engine with shorter, brighter and harder settings: kick decay 46, tune 84, attack 96, drive 28; snare tone 96, snappy 112; closed hat decay 30; open hat decay 58; clap decay 52. You can change all of them and save them in your project.</div>
+<h2 id="songs">6. Songs</h2>
+<p>Eight songs are built into the firmware. Load them from the <a href="#projects">project menu</a>: <kbd>SAVE</kbd>, key 2 (LOAD PROJECT), then turn <kbd>K1</kbd> to the 6210 SONGS bank.</p>
+<div class="table"><table>
+<thead><tr><th scope="col">#</th><th scope="col">Song</th><th scope="col">BPM</th><th scope="col">Style</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>HYPNO 132</td><td>132</td><td>Hypnotic techno</td></tr>
+<tr><td>2</td><td>HARD 145</td><td>145</td><td>Hard techno with an 808 rumble</td></tr>
+<tr><td>3</td><td>ELECTRO 126</td><td>126</td><td>Electro on the 808</td></tr>
+<tr><td>4</td><td>HOUSE 124</td><td>124</td><td>House with swing</td></tr>
+<tr><td>5</td><td>MINIMAL 128</td><td>128</td><td>Minimal</td></tr>
+<tr><td>6</td><td>BREAKS 136</td><td>136</td><td>Breakbeat</td></tr>
+<tr><td>7</td><td>DUB 118</td><td>118</td><td>Dub techno</td></tr>
+<tr><td>8</td><td>BOOM BAP 90</td><td>90</td><td>Hip hop with swing</td></tr>
+</tbody></table></div>
+<p>A song replaces the current project. Save it to one of your 16 slots to keep your changes.</p>
 
 <h2 id="length">7. Length and pages</h2>
 <p>Turn <kbd>ALGORITHM</kbd> to set the track's length to 16, 32, 48 or 64 steps. While playing, a new length starts at the track's next loop. Each track has its own length, so a 48-step hat line can run against a 64-step kick.</p>
@@ -157,24 +171,33 @@ footer{border-top:3px solid var(--ink);padding:24px;font-size:14px;color:var(--d
 </ul>
 
 <h2 id="roll">9. Roll</h2>
-<p>On a drum track the arpeggiator is a drum repeat. Tap <kbd>ARP</kbd> to switch it on (<code>ARP ON</code>), then hold a black key: the drum rolls at the set rate. Hold <kbd>ARP</kbd> for its page: RATE and DIRECTION, then (turn <kbd>ALGORITHM</kbd>) SWING and HOLD. While roll is on the ARP light blinks every sixteenth.</p>
+<p>The arpeggiator is a drum repeat. Tap <kbd>ARP</kbd> to switch it on (<code>ARP ON</code>), then hold a black key: the drum rolls at the set rate. Hold <kbd>ARP</kbd> for its page: RATE and DIRECTION, then (turn <kbd>ALGORITHM</kbd>) SWING and HOLD. While roll is on the ARP light blinks every sixteenth.</p>
 
 <h2 id="mixer">10. Mixer</h2>
 <figure><img src="../assets/mixer.png" width="480" height="480" alt="Mixer with mute and solo buttons for eight tracks"><figcaption>The mixer.</figcaption></figure>
 <p>Tap <kbd>GLO</kbd> to open it, tap again to go back. Or hold <kbd>GLO</kbd> to use it only while held.</p>
 <ul>
 <li>White keys 1–8 mute tracks 1–8; keys 9–16 solo them.</li>
-<li><kbd>K1</kbd>–<kbd>K4</kbd> set the volume of four tracks; <kbd>SELECT</kbd> moves between tracks 1–4 and 5–8.</li>
+<li><kbd>K1</kbd>–<kbd>K4</kbd> set the volume of the four kits.</li>
 <li>Lights: a playing track's key is lit, a muted track's key double flashes, a solo key blinks fast. Outside the mixer, <kbd>GLO</kbd> double flashes every bar while anything is muted or soloed.</li>
 </ul>
 
 <h2 id="sound">11. Sound editing</h2>
-<p>Tap <kbd>EDIT</kbd> for the sound editor of the track. On a drum track it opens on the selected drum; <kbd>K1</kbd>–<kbd>K4</kbd> change its first four parameters, and pressing a drum's key switches to that drum. Press <kbd>SCL</kbd> (or hold <kbd>EDIT</kbd> from another page) for the advanced editor with every parameter; there <kbd>SELECT</kbd> turns the pages of four. <kbd>ENV</kbd> and <kbd>LFO</kbd> open the envelope and LFO pages. <kbd>FX</kbd> holds the reverb and delay sends of the track and the effect settings. Every sound edit can be undone with <kbd>HOME</kbd> + <kbd>SAVE</kbd>.</p>
+<p>Tap <kbd>EDIT</kbd> for the sound editor. It opens on the selected drum; <kbd>K1</kbd>–<kbd>K4</kbd> change its first four parameters, and pressing a drum's key switches to that drum. Press <kbd>SCL</kbd> or hold <kbd>EDIT</kbd> for the advanced editor with every parameter; there <kbd>SELECT</kbd> turns the pages of four. <kbd>ENV</kbd> and <kbd>LFO</kbd> open the envelope and LFO pages. <kbd>FX</kbd> holds the reverb and delay sends of the track and the effect settings. Every sound edit can be undone with <kbd>HOME</kbd> + <kbd>SAVE</kbd>.</p>
 
-<h2 id="projects">12. Saving and projects</h2>
+<h2 id="projects">12. Project menu: save, load, new</h2>
+<p>Press <kbd>SAVE</kbd> on any page. A menu opens; pick an entry with keys 1–3 (or <kbd>SELECT</kbd> and <kbd>SAVE</kbd>). <kbd>HOME</kbd> goes back.</p>
+<figure><img src="../assets/menu.png" width="480" height="480" alt="Project menu with save, load and new project"><figcaption>The project menu.</figcaption></figure>
+<h3>1 · Save project</h3>
+<p>Pick a slot 1–16 with <kbd>SELECT</kbd> or <kbd>PRESETS</kbd>. <kbd>K1</kbd> moves the cursor in the name, <kbd>K2</kbd> changes the letter. <kbd>SAVE</kbd> writes it; on a used slot it asks <code>OVERWRITE?</code> and a second <kbd>SAVE</kbd> confirms.</p>
+<h3>2 · Load project</h3>
+<p>A list of names, eight at a time. <kbd>K1</kbd> switches between your 16 slots (USER) and the 8 built-in songs (6210 SONGS). Press a white key to load that slot, or move with <kbd>SELECT</kbd> / <kbd>PRESETS</kbd>. <kbd>PLAY</kbd> loads and starts. The small square marks the project that is loaded now.</p>
+<figure><img src="../assets/songs.png" width="480" height="480" alt="Load list with the eight 6210 songs"><figcaption>The 6210 SONGS bank.</figcaption></figure>
+<h3>3 · New project</h3>
+<p>Asks <code>CLEAR THE CURRENT PROJECT?</code> Key 1 or <kbd>SAVE</kbd> = YES, key 2 or <kbd>HOME</kbd> = NO. YES gives an empty project: the four kits with no steps, tempo 130, ARP off, nothing muted, tracks 5–8 off. Your saved slots are not touched, and <kbd>HOME</kbd> + <kbd>SAVE</kbd> undoes it.</p>
+<figure><img src="../assets/confirm.png" width="480" height="480" alt="Clear the current project? YES / NO"><figcaption>New project asks first.</figcaption></figure>
 <ul>
-<li><kbd>SAVE</kbd> opens the save page. Pick a slot with <kbd>SELECT</kbd> or <kbd>PRESETS</kbd> and confirm on screen. When the project is saved the SAVE light stops blinking.</li>
-<li><kbd>HOME</kbd> on the DRUM page opens the browser: white keys load slots 1–16, <kbd>PLAY</kbd> loads and starts.</li>
+<li><kbd>HOME</kbd> on the DRUM page opens the load list directly.</li>
 <li><kbd>HOME</kbd> + <kbd>SAVE</kbd>: undo / redo the last edit.</li>
 <li>Copy, paste, clear and repeat: <kbd>SEQ</kbd> + <kbd>EDIT</kbd> opens the actions menu.</li>
 </ul>
@@ -183,12 +206,10 @@ footer{border-top:3px solid var(--ink);padding:24px;font-size:14px;color:var(--d
 <div class="table"><table>
 <thead><tr><th scope="col">Hold</th><th scope="col">Press or turn</th><th scope="col">Does</th></tr></thead>
 <tbody>
-<tr><td><kbd>EDIT</kbd> (DRUM page)</td><td><kbd>SAVE</kbd></td><td>Load the 6210 kit</td></tr>
-<tr><td><kbd>EDIT</kbd> (DRUM page)</td><td><kbd>PRESETS</kbd></td><td>Change the track's engine</td></tr>
+<tr><td>—</td><td><kbd>SAVE</kbd></td><td>Project menu: save, load, new</td></tr>
 <tr><td><kbd>HOME</kbd></td><td><kbd>SEQ</kbd> in time</td><td>Tap tempo</td></tr>
 <tr><td><kbd>HOME</kbd></td><td><kbd>SAVE</kbd></td><td>Undo / redo</td></tr>
 <tr><td><kbd>HOME</kbd></td><td><kbd>PLAY</kbd></td><td>Stop everything</td></tr>
-<tr><td><kbd>HOME</kbd></td><td><kbd>PRESETS</kbd></td><td>Change the track's engine</td></tr>
 <tr><td><kbd>SEQ</kbd></td><td><kbd>EDIT</kbd></td><td>Actions: copy, paste, clear, repeat</td></tr>
 <tr><td><kbd>GLO</kbd></td><td>keys, knobs</td><td>Mixer while held</td></tr>
 <tr><td><kbd>ARP</kbd> (hold)</td><td>—</td><td>Roll / arpeggiator settings</td></tr>
@@ -209,7 +230,7 @@ footer{border-top:3px solid var(--ink);padding:24px;font-size:14px;color:var(--d
 <tr><td><kbd>SAVE</kbd></td><td>1 Hz</td><td>Unsaved edits</td></tr>
 <tr><td><kbd>GLO</kbd></td><td>Double flash each bar (every 2 s when stopped)</td><td>Something is muted or soloed</td></tr>
 <tr><td><kbd>ARP</kbd></td><td>Every sixteenth (steady when stopped)</td><td>Roll / arpeggiator on</td></tr>
-<tr><td><kbd>EDIT</kbd></td><td>2 Hz</td><td>EDIT is held on the DRUM page</td></tr>
+<tr><td>White keys 1–3</td><td>On, the chosen one blinks</td><td>Entries of the project menu</td></tr>
 <tr><td><kbd>OCT −</kbd> / <kbd>+</kbd></td><td>Steady</td><td>More steps that way</td></tr>
 <tr><td><kbd>SEQ</kbd> <kbd>FX</kbd> <kbd>ENV</kbd> <kbd>LFO</kbd> <kbd>HOME</kbd></td><td>Steady</td><td>That page is open</td></tr>
 </tbody></table></div>
@@ -217,10 +238,10 @@ footer{border-top:3px solid var(--ink);padding:24px;font-size:14px;color:var(--d
 <h2 id="help">15. Troubleshooting</h2>
 <h3>The keys play notes instead of setting steps</h3>
 <p>You are recording (REC blinks), the mixer is open, or you are not on the DRUM page. Press <kbd>REC</kbd> to stop recording, or <kbd>HOME</kbd> to go back to DRUM.</p>
-<h3>Black keys do nothing on a track</h3>
-<p>On drum tracks only the first 11 (808) or 8 (sampler) black keys have drums. On melodic tracks they play notes of the current octave.</p>
-<h3>The kit did not load at start</h3>
-<p>It only loads on an empty project. Hold <kbd>EDIT</kbd> and press <kbd>SAVE</kbd> to load it any time.</p>
+<h3>A sound keeps playing that I cannot find</h3>
+<p>Old projects can hold a track with ARP HOLD or the PLAY role. <kbd>HOME</kbd> + <kbd>PLAY</kbd> silences everything; <kbd>SAVE</kbd> › NEW PROJECT › YES clears it for good (ARP off, tracks 5–8 off).</p>
+<h3>Song 1 did not load at start</h3>
+<p>It only loads on an empty project; the FM-1 starts with the project you saved last. Load it from <kbd>SAVE</kbd> › LOAD PROJECT › 6210 SONGS.</p>
 <h3>Hanging notes</h3>
 <p><kbd>HOME</kbd> + <kbd>PLAY</kbd> stops and silences everything.</p>
 <h3>Back to the original firmware</h3>
