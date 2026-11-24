@@ -16,8 +16,9 @@
  *   OCT - / +      previous / next 16 steps
  *   SELECT         track 1..4        ALGORITHM  length 16/32/48/64
  *   PRESETS        kit program       K1 drum, K2 velocity, K3 chance, K4 tune
- * SAVE opens the project menu: SAVE PROJECT, LOAD PROJECT (user slots and the
- * eight built-in songs) and NEW PROJECT (asks YES / NO first).
+ * SAVE opens the project menu: SAVE PROJECT, LOAD SAVED (the 16 user slots;
+ * EDIT deletes one after YES / NO), LOAD TEMPLATE (the eight built-in songs)
+ * and NEW PROJECT (asks YES / NO first).
  */
 #include "drum808.h"
 
@@ -235,8 +236,8 @@ static void dp_menu_controls(const struct fm1_controls *c, uint32_t pressed, uin
     blocked_keys |= key_down; /* A menu key must not also write a step on the next page. */
     int move = c->encoders[0] + c->encoders[2] + c->encoders[6];
     unsigned ok = (pressed & BUTTON(SAVE)) != 0, no = 0;
-    for (unsigned i = 0; i < 3; ++i)
-        if (key_down & (1U << white_keys[i])) {
+    for (unsigned i = 0; i < 4; ++i)
+        if (key_down & (1U << white_keys[i]) && (!dp_confirm || i < 2)) {
             if (dp_confirm) { ok = i == 0; no = i == 1; }
             else { dp_item = i; ok = 1; }
         }
@@ -250,15 +251,17 @@ static void dp_menu_controls(const struct fm1_controls *c, uint32_t pressed, uin
         notice = "NEW PROJECT"; notice_until = now + 2000U;
         return;
     }
-    if (move) dp_item = (unsigned)clamp((int)dp_item + move, 0, 2);
+    if (move) dp_item = (unsigned)clamp((int)dp_item + move, 0, 3);
     if (!ok) return;
     if (dp_item == 0) {
         project_return = DRUM; page = PROJECT; project_result = 0;
         project_reload = project_operation = 0;
         project_slot = groove_project_slot(); project_factory = name_cursor = 0;
         project_refresh();
-    } else if (dp_item == 1) {
-        preset_bank = 0; preset_slot = groove_project_slot();
+    } else if (dp_item <= 2) {
+        /* LOAD SAVED: the user slots. LOAD TEMPLATE: the built-in songs. */
+        preset_lock = 1; preset_bank = dp_item - 1;
+        preset_slot = preset_bank ? (preset_current_bank ? preset_current_slot : 0) : groove_project_slot();
         project_result = 0; preset_refresh(); page = PRESET_BROWSER;
     } else dp_confirm = 1;
 }
@@ -286,15 +289,58 @@ static void dp_menu_draw(void)
         text(6, 224, "KEY 2 / HOME = NO", 1, DIM, BACK);
         return;
     }
-    static const char *const items[3] = {"SAVE PROJECT", "LOAD PROJECT", "NEW PROJECT"};
-    for (unsigned i = 0; i < 3; ++i) {
-        unsigned y = 58 + i * 46, on = i == dp_item;
-        paint_fill(6, y, 228, 38, on ? TEXT : PANEL);
-        number(14, y + 12, (int)i + 1, 1, 2, on ? BACK : DIM, on ? TEXT : PANEL);
-        text(40, y + 12, items[i], 2, on ? BACK : TEXT, on ? TEXT : PANEL);
+    static const char *const items[4] = {"SAVE PROJECT", "LOAD SAVED", "LOAD TEMPLATE", "NEW PROJECT"};
+    for (unsigned i = 0; i < 4; ++i) {
+        unsigned y = 54 + i * 38, on = i == dp_item;
+        paint_fill(6, y, 228, 32, on ? TEXT : PANEL);
+        number(14, y + 9, (int)i + 1, 1, 2, on ? BACK : DIM, on ? TEXT : PANEL);
+        text(40, y + 9, items[i], 2, on ? BACK : TEXT, on ? TEXT : PANEL);
     }
-    text(6, 210, "SELECT / KEYS 1-3", 1, DIM, BACK);
+    text(6, 210, "SELECT / KEYS 1-4", 1, DIM, BACK);
     text(6, 224, "SAVE = OPEN  HOME = BACK", 1, DIM, BACK);
+}
+
+/* ---- Delete a saved project (load list, user slots) ------------------------- */
+static int dp_browser_gesture(const struct fm1_controls *c, uint32_t pressed, uint32_t key_down)
+{
+    if (page != PRESET_BROWSER) { dp_delete = 0; return 0; }
+    if (!dp_delete) {
+        if (!(pressed & BUTTON(EDIT)) || preset_bank) return 0;
+        if (project_stored_result) { project_result = GROOVE_PROJECT_EMPTY; return 1; }
+        dp_delete = 1; cache->shown_page = ~0U;
+        return 1;
+    }
+    blocked_keys |= key_down;
+    unsigned yes = (pressed & BUTTON(SAVE)) || (key_down & (1U << white_keys[0]));
+    unsigned no = (pressed & ~BUTTON(SAVE)) || (key_down & ~(1U << white_keys[0])) || encoder_active(c->encoders);
+    if (!yes && !no) return 1;
+    dp_delete = 0; cache->shown_page = ~0U;
+    if (yes) {
+        project_result = groove_project_delete_slot(preset_slot);
+        if (project_result == GROOVE_PROJECT_EMPTY) project_result = 0;
+        if (!project_result && !preset_current_bank && preset_current_slot == preset_slot) preset_loaded = 0;
+        unsigned keep = project_result; preset_refresh(); project_result = (int)keep;
+    }
+    return 1;
+}
+static void dp_delete_draw(void)
+{
+    uint32_t sig = signature(preset_slot, preset_names[preset_slot], 12);
+    if (cache->hlv[1] == sig) return;
+    cache->hlv[1] = sig;
+    paint_fill(0, 30, 240, 210, BACK);
+    text(8, 38, "DELETE A SAVED PROJECT", 1, DIM, BACK);
+    paint_fill(10, 52, 220, 84, TEXT);
+    number(22, 62, (int)preset_slot + 1, 2, 2, BACK, TEXT);
+    text(52, 62, preset_names[preset_slot], 2, BACK, TEXT);
+    text(22, 88, "DELETE IT?", 2, BACK, TEXT);
+    text(22, 114, "THIS CANNOT BE UNDONE", 1, BACK, TEXT);
+    frame(10, 148, 104, 40, TEXT); frame(126, 148, 104, 40, TEXT);
+    paint_fill(13, 151, 98, 34, TEXT);
+    text(38, 160, "YES", 2, BACK, TEXT);
+    text(164, 160, "NO", 2, TEXT, BACK);
+    text(6, 210, "KEY 1 / SAVE = YES", 1, DIM, BACK);
+    text(6, 224, "KEY 2 / ANY OTHER = NO", 1, DIM, BACK);
 }
 
 /* ---- Controls -------------------------------------------------------------- */

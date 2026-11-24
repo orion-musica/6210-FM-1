@@ -220,6 +220,7 @@ unsigned groove_project_slot(void);
 uint32_t groove_project_revision(void);
 int groove_project_save_slot(unsigned slot);
 int groove_project_load_slot(unsigned slot);
+int groove_project_delete_slot(unsigned slot); /* 6210: 0 deleted, GROOVE_PROJECT_EMPTY if nothing saved */
 int groove_project_info(unsigned slot, char name[13]);
 void groove_project_name(char name[13]);
 void groove_project_rename(unsigned character, char value);

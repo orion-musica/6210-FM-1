@@ -132,7 +132,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
     <div class="grid3">
       <div class="card"><h3>Four kits</h3><p>Track 1 808, track 2 909, track 3 606, track 4 707. Eleven drums each: BD, SD, three toms, rim, clap, cowbell, cymbal, open and closed hat.</p></div>
       <div class="card"><h3>Eight songs</h3><p>Hypno, hard techno, electro, house, minimal, breaks, dub and boom bap, built in. Song 1 is loaded the first time you switch on.</p></div>
-      <div class="card"><h3>Project menu</h3><p><b>SAVE</b> asks what you want: save, load from a named list, or start a new empty project after a YES / NO question.</p></div>
+      <div class="card"><h3>Project menu</h3><p><b>SAVE</b> asks what you want: save, load a saved project, load a template song, or start a new empty project. Deleting a save and clearing a project both ask YES / NO first.</p></div>
       <div class="card"><h3>TR step keys</h3><p>The 16 white keys are the steps of the selected drum. Black keys pick a drum and play it.</p></div>
       <div class="card"><h3>Blink codes</h3><p>Every light has a rhythm: playhead, beat, record, unsaved, muted, roll. You can read the machine without looking at the screen.</p></div>
       <div class="card"><h3>Velocity and chance</h3><p>K2 sets the step's velocity (accent at 120 and up), K3 gives it a chance to play from 12% to 100%.</p></div>
@@ -153,9 +153,10 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
       <figure><img src="assets/kit-909.png" width="480" height="480" loading="lazy" alt="DRUM page, track 2 with the 909 kit: kick on every beat and open hats off the beat"><figcaption><b>909</b> Four on the floor with open hats off the beat.</figcaption></figure>
       <figure><img src="assets/kit-606.png" width="480" height="480" loading="lazy" alt="DRUM page, track 3 with the 606 kit: closed hats on every sixteenth"><figcaption><b>606</b> Sixteenth hats with accents.</figcaption></figure>
       <figure><img src="assets/kit-707.png" width="480" height="480" loading="lazy" alt="DRUM page, track 4 with the 707 kit: claps on 2 and 4"><figcaption><b>707</b> Claps on 2 and 4.</figcaption></figure>
-      <figure><img src="assets/menu.png" width="480" height="480" loading="lazy" alt="Project menu: 1 save project, 2 load project, 3 new project"><figcaption><b>SAVE MENU</b> Save, load or start new.</figcaption></figure>
+      <figure><img src="assets/menu.png" width="480" height="480" loading="lazy" alt="Project menu: 1 save project, 2 load saved, 3 load template, 4 new project"><figcaption><b>SAVE MENU</b> Save, load saved, load template or start new.</figcaption></figure>
       <figure><img src="assets/confirm.png" width="480" height="480" loading="lazy" alt="Clear the current project? Saved slots stay. YES and NO"><figcaption><b>NEW PROJECT</b> Asks YES or NO first. Saved slots are not touched.</figcaption></figure>
-      <figure><img src="assets/songs.png" width="480" height="480" loading="lazy" alt="Load project list: the eight 6210 songs from HYPNO 132 to BOOM BAP 90"><figcaption><b>LOAD</b> A named list of your 16 slots and the 8 songs.</figcaption></figure>
+      <figure><img src="assets/songs.png" width="480" height="480" loading="lazy" alt="Load template list: the eight 6210 songs from HYPNO 132 to BOOM BAP 90"><figcaption><b>LOAD TEMPLATE</b> The 8 songs, by name.</figcaption></figure>
+      <figure><img src="assets/delete.png" width="480" height="480" loading="lazy" alt="Delete a saved project: 01 ELECTRO 126, delete it? This cannot be undone. YES and NO"><figcaption><b>DELETE</b> EDIT in the saved list deletes a save, after YES / NO.</figcaption></figure>
       <figure><img src="assets/mixer.png" width="480" height="480" loading="lazy" alt="Mixer with mute and solo buttons for eight tracks"><figcaption><b>MIXER</b> Keys 1–8 mute, 9–16 solo.</figcaption></figure>
     </div>
   </div>
@@ -295,7 +296,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
   function key(k) {
     if (st.mode === 'DRUM') { var a = pats[st.sel].split(''); a[k] = a[k] === '.' ? 'x' : '.'; pats[st.sel] = a.join(''); st.cursor = k; st.edited = true; }
     else if (st.mode === 'MIXER') { if (k < 8) st.mutes[k] = st.mutes[k] ? 0 : 1; }
-    else if (k < 3) { st.item = k; if (k === 0) st.edited = false; }
+    else if (k < 4) { st.item = k; if (k === 0) st.edited = false; }
   }
   var t0 = performance.now(), still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   function frame(now) {
@@ -316,7 +317,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
         if (st.playing && i === step) lit = lit ? ph >= 0.4 : ph < 0.5;
         else if (!st.playing && i === st.cursor) lit = !!two;
       } else if (st.mode === 'MIXER') { if (i < 8) { lit = st.mutes[i] ? dbl : true; txt = 'T' + (i + 1); } else txt = 'S' + (i - 7); }
-      else if (i < 3) { lit = i !== st.item || two; txt = ['SAVE','LOAD','NEW'][i]; }
+      else if (i < 4) { lit = i !== st.item || two; txt = ['SAVE','LOAD','TMPL','NEW'][i]; }
       b.classList.toggle('lit', lit); if (b.textContent !== txt) b.textContent = txt;
     });
     blkBtn.forEach(function (b, d) {
@@ -324,7 +325,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
       b.classList.toggle('lit', st.mode === 'DRUM' && ((d === st.sel) !== hit));
     });
     var msg = st.mode === 'DRUM' ? 'T1 808 · ' + kit[st.sel] + ' · ' + (st.playing ? 'PLAYING' : 'STOPPED') + (st.rec ? ' · REC' : '') + (st.roll ? ' · ROLL' : '')
-            : st.mode === 'MIXER' ? 'MIXER · KEYS 1-8 MUTE · TRACK 6 IS MUTED' : 'SAVE MENU · KEYS 1-3: SAVE, LOAD, NEW';
+            : st.mode === 'MIXER' ? 'MIXER · KEYS 1-8 MUTE · TRACK 6 IS MUTED' : 'SAVE MENU · KEYS 1-4: SAVE, LOAD SAVED, LOAD TEMPLATE, NEW';
     if (lcd.textContent !== msg) lcd.textContent = msg;
     if (!still) requestAnimationFrame(frame);
   }

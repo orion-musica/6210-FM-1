@@ -103,7 +103,7 @@ footer{border-top:3px solid var(--ink);padding:24px;font-size:14px;color:var(--d
 <tr><td><kbd>FX</kbd></td><td colspan="2">Reverb and delay sends, effect settings, tempo and delay sync</td></tr>
 <tr><td><kbd>GLO</kbd></td><td colspan="2">Tap: mixer. Hold: mixer while held</td></tr>
 <tr><td><kbd>ARP</kbd></td><td colspan="2">Tap: roll / arpeggiator on or off. Hold: its settings</td></tr>
-<tr><td><kbd>SAVE</kbd></td><td colspan="2"><a href="#projects">Project menu</a>: save, load, new</td></tr>
+<tr><td><kbd>SAVE</kbd></td><td colspan="2"><a href="#projects">Project menu</a>: save, load saved, load template, new</td></tr>
 <tr><td><kbd>PLAY</kbd> <kbd>REC</kbd></td><td colspan="2">Start / stop, record</td></tr>
 </tbody></table></div>
 
@@ -142,7 +142,7 @@ footer{border-top:3px solid var(--ink);padding:24px;font-size:14px;color:var(--d
 <p>All four kits use the FM1 Open DRUM 808 engine; the 909, 606 and 707 are settings of it. Change any drum with <kbd>EDIT</kbd>: your changes are saved with the project. Tracks 5–8 are switched off in 6210.</p>
 
 <h2 id="songs">6. Songs</h2>
-<p>Eight songs are built into the firmware. Load them from the <a href="#projects">project menu</a>: <kbd>SAVE</kbd>, key 2 (LOAD PROJECT), then turn <kbd>K1</kbd> to the 6210 SONGS bank.</p>
+<p>Eight songs are built into the firmware as templates. Load them from the <a href="#projects">project menu</a>: <kbd>SAVE</kbd>, key 3 (LOAD TEMPLATE).</p>
 <div class="table"><table>
 <thead><tr><th scope="col">#</th><th scope="col">Song</th><th scope="col">BPM</th><th scope="col">Style</th></tr></thead>
 <tbody>
@@ -186,18 +186,22 @@ footer{border-top:3px solid var(--ink);padding:24px;font-size:14px;color:var(--d
 <p>Tap <kbd>EDIT</kbd> for the sound editor. It opens on the selected drum; <kbd>K1</kbd>–<kbd>K4</kbd> change its first four parameters, and pressing a drum's key switches to that drum. Press <kbd>SCL</kbd> or hold <kbd>EDIT</kbd> for the advanced editor with every parameter; there <kbd>SELECT</kbd> turns the pages of four. <kbd>ENV</kbd> and <kbd>LFO</kbd> open the envelope and LFO pages. <kbd>FX</kbd> holds the reverb and delay sends of the track and the effect settings. Every sound edit can be undone with <kbd>HOME</kbd> + <kbd>SAVE</kbd>.</p>
 
 <h2 id="projects">12. Project menu: save, load, new</h2>
-<p>Press <kbd>SAVE</kbd> on any page. A menu opens; pick an entry with keys 1–3 (or <kbd>SELECT</kbd> and <kbd>SAVE</kbd>). <kbd>HOME</kbd> goes back.</p>
-<figure><img src="../assets/menu.png" width="480" height="480" alt="Project menu with save, load and new project"><figcaption>The project menu.</figcaption></figure>
+<p>Press <kbd>SAVE</kbd> on any page. A menu opens; pick an entry with keys 1–4 (or <kbd>SELECT</kbd> and <kbd>SAVE</kbd>). <kbd>HOME</kbd> goes back.</p>
+<figure><img src="../assets/menu.png" width="480" height="480" alt="Project menu: save project, load saved, load template, new project"><figcaption>The project menu.</figcaption></figure>
 <h3>1 · Save project</h3>
 <p>Pick a slot 1–16 with <kbd>SELECT</kbd> or <kbd>PRESETS</kbd>. <kbd>K1</kbd> moves the cursor in the name, <kbd>K2</kbd> changes the letter. <kbd>SAVE</kbd> writes it; on a used slot it asks <code>OVERWRITE?</code> and a second <kbd>SAVE</kbd> confirms.</p>
-<h3>2 · Load project</h3>
-<p>A list of names, eight at a time. <kbd>K1</kbd> switches between your 16 slots (USER) and the 8 built-in songs (6210 SONGS). Press a white key to load that slot, or move with <kbd>SELECT</kbd> / <kbd>PRESETS</kbd>. <kbd>PLAY</kbd> loads and starts. The small square marks the project that is loaded now.</p>
-<figure><img src="../assets/songs.png" width="480" height="480" alt="Load list with the eight 6210 songs"><figcaption>The 6210 SONGS bank.</figcaption></figure>
-<h3>3 · New project</h3>
+<h3>2 · Load saved</h3>
+<p>Your 16 slots as a list of names, eight at a time; it opens on the slot you used last. Press a white key to load that slot, or move with <kbd>SELECT</kbd> / <kbd>PRESETS</kbd> and press <kbd>PLAY</kbd> to load and start. The small square marks the project that is loaded now.</p>
+<p><b>Delete a save:</b> move to it and press <kbd>EDIT</kbd>. It asks <code>DELETE IT?</code> Key 1 or <kbd>SAVE</kbd> = YES, key 2 or any other button = NO. A deleted save cannot be brought back, and undo does not cover it.</p>
+<figure><img src="../assets/delete.png" width="480" height="480" alt="Delete a saved project: delete it? YES / NO"><figcaption>Deleting asks first.</figcaption></figure>
+<h3>3 · Load template</h3>
+<p>The eight built-in <a href="#songs">songs</a>. A template replaces the current project; save it to keep your changes.</p>
+<figure><img src="../assets/songs.png" width="480" height="480" alt="Load template list with the eight 6210 songs"><figcaption>The templates.</figcaption></figure>
+<p><kbd>HOME</kbd> on the DRUM page opens the same list too; there <kbd>K1</kbd> switches between your saves and the templates.</p>
+<h3>4 · New project</h3>
 <p>Asks <code>CLEAR THE CURRENT PROJECT?</code> Key 1 or <kbd>SAVE</kbd> = YES, key 2 or <kbd>HOME</kbd> = NO. YES gives an empty project: the four kits with no steps, tempo 130, ARP off, nothing muted, tracks 5–8 off. Your saved slots are not touched, and <kbd>HOME</kbd> + <kbd>SAVE</kbd> undoes it.</p>
 <figure><img src="../assets/confirm.png" width="480" height="480" alt="Clear the current project? YES / NO"><figcaption>New project asks first.</figcaption></figure>
 <ul>
-<li><kbd>HOME</kbd> on the DRUM page opens the load list directly.</li>
 <li><kbd>HOME</kbd> + <kbd>SAVE</kbd>: undo / redo the last edit.</li>
 <li>Copy, paste, clear and repeat: <kbd>SEQ</kbd> + <kbd>EDIT</kbd> opens the actions menu.</li>
 </ul>
@@ -206,7 +210,8 @@ footer{border-top:3px solid var(--ink);padding:24px;font-size:14px;color:var(--d
 <div class="table"><table>
 <thead><tr><th scope="col">Hold</th><th scope="col">Press or turn</th><th scope="col">Does</th></tr></thead>
 <tbody>
-<tr><td>—</td><td><kbd>SAVE</kbd></td><td>Project menu: save, load, new</td></tr>
+<tr><td>—</td><td><kbd>SAVE</kbd></td><td>Project menu: save, load saved, load template, new</td></tr>
+<tr><td>Load saved list</td><td><kbd>EDIT</kbd></td><td>Delete the save (asks YES / NO)</td></tr>
 <tr><td><kbd>HOME</kbd></td><td><kbd>SEQ</kbd> in time</td><td>Tap tempo</td></tr>
 <tr><td><kbd>HOME</kbd></td><td><kbd>SAVE</kbd></td><td>Undo / redo</td></tr>
 <tr><td><kbd>HOME</kbd></td><td><kbd>PLAY</kbd></td><td>Stop everything</td></tr>
@@ -230,7 +235,7 @@ footer{border-top:3px solid var(--ink);padding:24px;font-size:14px;color:var(--d
 <tr><td><kbd>SAVE</kbd></td><td>1 Hz</td><td>Unsaved edits</td></tr>
 <tr><td><kbd>GLO</kbd></td><td>Double flash each bar (every 2 s when stopped)</td><td>Something is muted or soloed</td></tr>
 <tr><td><kbd>ARP</kbd></td><td>Every sixteenth (steady when stopped)</td><td>Roll / arpeggiator on</td></tr>
-<tr><td>White keys 1–3</td><td>On, the chosen one blinks</td><td>Entries of the project menu</td></tr>
+<tr><td>White keys 1–4</td><td>On, the chosen one blinks</td><td>Entries of the project menu; keys 1–2 are YES / NO when it asks</td></tr>
 <tr><td><kbd>OCT −</kbd> / <kbd>+</kbd></td><td>Steady</td><td>More steps that way</td></tr>
 <tr><td><kbd>SEQ</kbd> <kbd>FX</kbd> <kbd>ENV</kbd> <kbd>LFO</kbd> <kbd>HOME</kbd></td><td>Steady</td><td>That page is open</td></tr>
 </tbody></table></div>
@@ -241,7 +246,7 @@ footer{border-top:3px solid var(--ink);padding:24px;font-size:14px;color:var(--d
 <h3>A sound keeps playing that I cannot find</h3>
 <p>Old projects can hold a track with ARP HOLD or the PLAY role. <kbd>HOME</kbd> + <kbd>PLAY</kbd> silences everything; <kbd>SAVE</kbd> › NEW PROJECT › YES clears it for good (ARP off, tracks 5–8 off).</p>
 <h3>Song 1 did not load at start</h3>
-<p>It only loads on an empty project; the FM-1 starts with the project you saved last. Load it from <kbd>SAVE</kbd> › LOAD PROJECT › 6210 SONGS.</p>
+<p>It only loads on an empty project; the FM-1 starts with the project you saved last. Load it from <kbd>SAVE</kbd> › LOAD TEMPLATE.</p>
 <h3>Hanging notes</h3>
 <p><kbd>HOME</kbd> + <kbd>PLAY</kbd> stops and silences everything.</p>
 <h3>Back to the original firmware</h3>

@@ -59,7 +59,7 @@ project menu. The DX7, 303, PSG and pluck editors of FM1 Open are compiled out t
 |---|---|
 | **Four kits** | T1 808, T2 909, T3 606, T4 707: eleven drums each (BD, SD, LT, MT, HT, RIM, CLAP, COW, CYM, OH, CH). |
 | **Eight songs** | Hypno, hard techno, electro, house, minimal, breaks, dub and boom bap; song 1 loads on first start. |
-| **Project menu** | SAVE opens save / load / new; new project asks YES or NO; load shows a named list. |
+| **Project menu** | SAVE opens save / load saved / load template / new; saves can be deleted; new and delete ask YES or NO. |
 | **TR step keys** | 16 white keys = 16 steps of the selected drum; black keys pick and play drums. |
 | **Velocity and chance** | Per step, on K2 and K3. Accent from velocity 120. |
 | **Up to 64 steps** | 16 / 32 / 48 / 64 steps per track, paged with OCT − / +. |
@@ -87,7 +87,7 @@ as `6210.fwsc`, with its SHA-256. To go back, open the installer and choose **Re
 4. Press a **black key** to pick a drum (first black key = kick, then snare, toms, rim, clap, cowbell,
    cymbal, open hat, closed hat), and **white keys** to set and clear its steps.
 5. Turn **K2** for the velocity of the step you touched last, **K3** for its chance, **K4** to tune the drum.
-6. Press **SAVE** for the project menu: 1 save, 2 load (your slots and the 8 songs), 3 new project.
+6. Press **SAVE** for the project menu: 1 save, 2 load saved, 3 load template (the 8 songs), 4 new project.
 
 The [manual](https://orion-musica.github.io/6210-FM-1/manual/) explains every control and page.
 
@@ -108,9 +108,10 @@ On the DRUM page:
 | Black keys | Pick and play a drum |
 | `OCT −` / `OCT +` | Previous / next 16 steps |
 | `EDIT` | Sound editor of the selected drum |
-| `SAVE` | Project menu: save · load · new (asks YES / NO) |
+| `SAVE` | Project menu: save · load saved · load template · new (asks YES / NO) |
 | `SEQ` | Full step editor (swing, click, count-in, MIDI clock, locks) |
-| `HOME` | Load list (your slots and the 8 songs) |
+| `HOME` | Load list (your saves and the templates, K1 switches) |
+| `EDIT` in the saved list | Delete that save (asks YES / NO) |
 | `GLO` | Mixer (keys 1–8 mute, 9–16 solo, K1–K4 volumes) |
 | `ARP` | Roll on / off; hold for its settings |
 | `HOME` + `SEQ` | Tap tempo |

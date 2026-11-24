@@ -136,7 +136,9 @@ static unsigned dp_phase(const struct groove_view *v);
 static const char *dp_song_name(unsigned song);
 static int dp_song_load(unsigned song);
 static void dp_menu_draw(void);
-static unsigned dp_item, dp_confirm; /* project menu entry, YES / NO asked */
+static unsigned dp_item, dp_confirm, dp_delete; /* project menu entry, YES / NO asked, delete asked */
+static void dp_delete_draw(void);
+static unsigned preset_lock; /* bank fixed when the browser comes from the project menu */
 static const uint16_t colors[8] = {0x4287, 0x4287, 0x4287, 0x4287, 0x4287, 0x4287, 0x4287, 0x4287}; /* 6210: one ink */
 static const uint8_t white_keys[16] = {0, 2, 4, 6, 7, 9, 11, 12, 14, 16, 18, 19, 21, 23, 24, 26};
 /* FM1 EDIT key IDs 15,17,19,22,24,27,29,31,34,36 minus 14. */
@@ -955,7 +957,7 @@ static __attribute__((noinline)) void preset_draw(void)
     paint_fill(0, 30, 240, 210, BACK);
     unsigned count = preset_bank ? 8U : 16U, first = preset_bank ? 0U : preset_slot & 8U;
     text(8, 36, preset_bank ? "6210 SONGS" : first ? "USER 9-16" : "USER 1-8", 1, DIM, BACK);
-    text(150, 36, "K1 BANK", 1, DIM, BACK);
+    if (!preset_lock) text(150, 36, "K1 BANK", 1, DIM, BACK);
     for (unsigned i = 0; i < 8 && first + i < count; ++i) {
         unsigned slot = first + i, y = 48 + i * 20, on = slot == preset_slot;
         unsigned loaded = preset_loaded && slot == preset_current_slot && preset_bank == preset_current_bank;
@@ -967,7 +969,7 @@ static __attribute__((noinline)) void preset_draw(void)
     text(8, 214, project_result == GROOVE_PROJECT_EMPTY ? "EMPTY SLOT" : project_result ? "LOAD FAILED"
          : preset_bank ? "KEYS 1-8 LOAD  PLAY = START" : "KEYS 1-16 LOAD  PLAY = START", 1,
          project_result ? AMBER : DIM, BACK);
-    text(8, 228, "SELECT / PRESETS MOVE  HOME BACK", 1, DIM, BACK);
+    text(8, 228, preset_bank ? "SELECT / PRESETS MOVE  HOME BACK" : "SEL/PRE MOVE  EDIT DELETE", 1, DIM, BACK);
 }
 static __attribute__((noinline)) void name_draw(void)
 {
@@ -1077,10 +1079,11 @@ static void leds(const struct groove_view *v, unsigned visible)
         }
     } else if (visible == FILES) {
         /* Keys 1..3 pick the menu entry (YES / NO when asking); the chosen one blinks. */
-        for (unsigned i = 0; i < (dp_confirm ? 2U : 3U); ++i)
+        for (unsigned i = 0; i < (dp_confirm ? 2U : 4U); ++i)
             if (i != (dp_confirm ? 0U : dp_item) || two) bits |= 1U << white_keys[i];
     } else if (visible == PRESET_BROWSER) {
-        bits = 1U << white_keys[preset_slot];
+        /* Asking to delete: key 1 (YES) blinks, key 2 (NO) is lit. */
+        bits = dp_delete ? (two ? 1U << white_keys[0] : 0U) | 1U << white_keys[1] : 1U << white_keys[preset_slot];
     } else if (visible == MIX) {
         /* Playing tracks are lit, muted ones double flash, solos blink fast. */
         for (unsigned t = 0; t < 8; ++t) {
@@ -1295,7 +1298,7 @@ static void draw_page_body(const struct fm1_ble_status *ble)
         return;
     }
     if (visible == PRESET_BROWSER) {
-        preset_draw();
+        if (dp_delete) dp_delete_draw(); else preset_draw();
         return;
     }
     if (visible == PROJECT) {
@@ -1829,6 +1832,8 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
      * its editor is open. Leave editors that cannot apply to the new source. */
     if (page == NAME && !DP_DX7(track))
         page = DRUM;
+    /* 6210: EDIT on a saved project in the load list asks to delete it. */
+    if (dp_browser_gesture(controls, pressed, key_down & ~blocked_keys)) goto controls_done;
     if ((controls->buttons & (BUTTON(HOME) | BUTTON(SAVE))) == (BUTTON(HOME) | BUTTON(SAVE)) &&
         (pressed & (BUTTON(HOME) | BUTTON(SAVE)))) {
         int r = groove_edit_undo();
@@ -1890,7 +1895,7 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
             if (page == ACTIONS && action_confirm) action_confirm = 0;
             else if (0 && ble_forget == 1) ble_forget = 0;
             else if (page == DRUM) {
-                preset_refresh(); project_result = 0; page = PRESET_BROWSER;
+                preset_lock = 0; preset_refresh(); project_result = 0; page = PRESET_BROWSER;
             } else page = DRUM; /* 6210: DRUM replaces the old overview */
         } else if (pressed & BUTTON(SEQ)) {
             /* SEQ alternates DRUM (6210) and the step editor. */
@@ -1989,7 +1994,7 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
     if (page == PRESET_BROWSER) {
         play_handled = 1;
         int delta = controls->encoders[0] + controls->encoders[6];
-        unsigned bank = (unsigned)clamp((int)preset_bank + controls->encoders[2], 0, 1);
+        unsigned bank = preset_lock ? preset_bank : (unsigned)clamp((int)preset_bank + controls->encoders[2], 0, 1);
         unsigned slot = (unsigned)clamp((int)preset_slot + delta, 0, bank ? 7 : GROOVE_PROJECT_SLOTS - 1);
         unsigned load = 0, start = 0;
         for (unsigned i = 0; i < 16; ++i)

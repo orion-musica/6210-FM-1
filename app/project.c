@@ -582,6 +582,40 @@ int groove_project_save_slot(unsigned slot)
     }
     return r;
 }
+/* 6210: forget one saved project. Recovery first finishes any pending copy,
+ * so the staging sector only repeats data that is already in its target and
+ * can be cleared with the slot. Slot 16 also keeps the device settings: there
+ * the record is rewritten as settings only. */
+int groove_project_delete_slot(unsigned slot)
+{
+    if (slot >= GROOVE_PROJECT_SLOTS)
+        return GROOVE_PROJECT_INVALID;
+    int r = recover_staging();
+    if (r)
+        return r;
+    unsigned sector = slot;
+    uint32_t generation = 0;
+    r = latest(slot, &sector, &generation);
+    if (r)
+        return r;
+    if (slot == SETTINGS_SECTOR) {
+        r = read_sector(sector); /* latest() leaves the last sector it read in record */
+        if (r)
+            return r;
+        if (record.header.magic != PROJECT_MAGIC)
+            return GROOVE_PROJECT_EMPTY;
+        record.header.magic = SETTINGS_MAGIC;
+        record.settings = settings;
+        r = write_record(SETTINGS_SECTOR, generation, 0);
+    } else {
+        r = fm1_flash_erase(STAGING_SECTOR * FM1_FLASH_SECTOR_BYTES);
+        if (!r)
+            r = fm1_flash_erase(slot * FM1_FLASH_SECTOR_BYTES);
+    }
+    if (!r)
+        ++project_revision;
+    return r;
+}
 int groove_project_load_slot(unsigned slot)
 {
     if (slot >= GROOVE_PROJECT_SLOTS)

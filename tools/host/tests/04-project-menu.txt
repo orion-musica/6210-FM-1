@@ -1,40 +1,54 @@
-# SAVE opens the project menu.
+# SAVE opens the project menu: 1 SAVE, 2 LOAD SAVED, 3 LOAD TEMPLATE, 4 NEW.
 boot
 wait 300
 tap 9
 wait 60
 shot menu
 expect-led 9 1
-# NEW PROJECT asks first; key 2 = NO goes back to the menu.
-hit 4
+# NEW PROJECT (key 4 = keyboard key 6) asks first; key 2 = NO goes back.
+hit 6
 wait 60
 shot confirm
 hit 2
 wait 60
-shot menu-again
 # NEW PROJECT, key 1 = YES: an empty project on the four kits.
-hit 4
+hit 6
 hit 0
 wait 200
 tracks
 shot new-project
-# LOAD PROJECT: the browser, K1 to the 6210 SONGS bank, key 3 loads song 3.
+# LOAD TEMPLATE (key 3): the eight songs; key 3 loads song 3.
 tap 9
-hit 2
+hit 4
 wait 60
-shot load-user
-turn 2 1
-wait 60
-shot load-songs
+shot templates
 hit 4
 wait 200
-tracks
 shot song3
-# SAVE PROJECT opens the save page.
+# SAVE PROJECT (key 1) and SAVE: writes slot 1.
 tap 9
 hit 0
 wait 60
 shot save-page
+tap 9
+wait 300
+# LOAD SAVED (key 2): slot 1 holds ELECTRO 126.
+tap 9
+hit 2
+wait 60
+shot saved-list
+# EDIT asks to delete; key 2 = NO keeps it.
+tap 6
+wait 60
+shot delete-ask
+hit 2
+wait 60
+shot kept
+# EDIT, then key 1 = YES deletes slot 1.
+tap 6
+hit 0
+wait 300
+shot deleted
 # REC blinks fast while recording; GLO opens the mixer.
 tap 8
 tap 13
