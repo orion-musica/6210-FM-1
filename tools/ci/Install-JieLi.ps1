@@ -8,6 +8,19 @@ $url = 'https://jl-update.oss-cn-shenzhen.aliyuncs.com/2.5.3.exe'
 $tmp = $env:RUNNER_TEMP
 $exe = Join-Path $tmp 'jl-2.5.3.exe'
 
+# A toolchain restored by actions/cache needs no download.
+$cached = Join-Path $tmp 'jl-inno'
+if (Test-Path $cached) {
+    $hit = Get-ChildItem $cached -Recurse -Filter clang.exe -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -match '\\pi32\\bin\\clang\.exe$' } | Select-Object -First 1
+    if ($hit) {
+        $pi32 = Split-Path (Split-Path $hit.FullName)
+        Write-Host "Toolchain (cached): $pi32"
+        "FM1_PI32_TOOLCHAIN=$pi32" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+        exit 0
+    }
+}
+
 curl.exe -fL --retry 5 --retry-delay 10 -o $exe $url
 if ($LASTEXITCODE -ne 0) { throw 'Download of the JieLi toolchain failed.' }
 Write-Host ("Downloaded {0:N1} MB, SHA-256 {1}" -f ((Get-Item $exe).Length / 1MB), (Get-FileHash $exe -Algorithm SHA256).Hash)
@@ -48,10 +61,29 @@ if ($c = Find-Pi32) { Done $c }
 
 # 2. Inno Setup: innoextract reads it without running it.
 if ($kind -eq 'inno') {
-    choco install innoextract -y --no-progress | Out-Null
+    # Chocolatey is sometimes unavailable: retry, then fall back to the
+    # official innoextract release on GitHub.
+    $ie = $null
+    for ($n = 0; $n -lt 3 -and !$ie; ++$n) {
+        choco install innoextract -y --no-progress 2>&1 | Select-Object -Last 3 | ForEach-Object { Write-Host $_ }
+        $cmd = Get-Command innoextract -ErrorAction SilentlyContinue
+        if ($cmd) { $ie = $cmd.Source }
+        elseif (Test-Path 'C:\ProgramData\chocolatey\bin\innoextract.exe') { $ie = 'C:\ProgramData\chocolatey\bin\innoextract.exe' }
+        elseif ($n -lt 2) { Start-Sleep -Seconds 15 }
+    }
+    if (!$ie) {
+        Write-Host 'Chocolatey failed; downloading innoextract 1.9 from GitHub.'
+        $zip = Join-Path $tmp 'innoextract.zip'
+        curl.exe -fL --retry 5 --retry-delay 10 -o $zip 'https://github.com/dscharrer/innoextract/releases/download/1.9/innoextract-1.9-windows.zip'
+        if ($LASTEXITCODE -eq 0) {
+            Expand-Archive -LiteralPath $zip -DestinationPath (Join-Path $tmp 'innoextract') -Force
+            $found = Get-ChildItem (Join-Path $tmp 'innoextract') -Recurse -Filter innoextract.exe | Select-Object -First 1
+            if ($found) { $ie = $found.FullName }
+        }
+    }
     $i = Join-Path $tmp 'jl-inno'
     $roots.Add($i)
-    innoextract -s -e -d $i $exe
+    if ($ie) { & $ie -s -e -d $i $exe } else { Write-Host 'innoextract is not available.' }
     if ($c = Find-Pi32) { Done $c }
 }
 

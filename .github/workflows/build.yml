@@ -39,6 +39,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache the JieLi toolchain
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}\jl-inno
+          key: jieli-2.5.3-inno-v1
+
       - name: JieLi Windows toolchain 2.5.3
         shell: pwsh
         timeout-minutes: 40
@@ -55,9 +61,9 @@ jobs:
         if: failure()
         shell: pwsh
         run: |
-          $nm = Join-Path $env:FM1_PI32_TOOLCHAIN 'bin\llvm-nm.exe'
           $elf = 'build\dx7\sdk.elf'
-          if (!(Test-Path $elf)) { Write-Host 'No ELF to inspect.'; exit 0 }
+          if (!$env:FM1_PI32_TOOLCHAIN -or !(Test-Path $elf)) { Write-Host 'No ELF to inspect.'; exit 0 }
+          $nm = Join-Path $env:FM1_PI32_TOOLCHAIN 'bin\llvm-nm.exe'
           $all = & $nm --print-size --size-sort --radix=d $elf
           Write-Host '--- 100 largest symbols ---'
           $all | Select-Object -Last 100 | ForEach-Object { Write-Host $_ }
