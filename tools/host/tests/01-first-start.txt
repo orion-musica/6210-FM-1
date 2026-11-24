@@ -1,0 +1,19 @@
+# First start on an empty project: song 1 (HYPNO 132) is loaded on the 808/909/606/707 kits.
+boot
+wait 600
+tracks
+shot song1-t1
+expect-led 11 1
+tap 12
+wait 30
+shot playing-a
+wait 170
+shot playing-b
+tap 12
+# Tracks 2..4: 909, 606, 707. SELECT stops at track 4.
+turn 0 1
+shot t2-909
+turn 0 1
+shot t3-606
+turn 0 5
+shot t4-707

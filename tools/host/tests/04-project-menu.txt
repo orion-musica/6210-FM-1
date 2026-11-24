@@ -1,0 +1,46 @@
+# SAVE opens the project menu.
+boot
+wait 300
+tap 9
+wait 60
+shot menu
+expect-led 9 1
+# NEW PROJECT asks first; key 2 = NO goes back to the menu.
+hit 4
+wait 60
+shot confirm
+hit 2
+wait 60
+shot menu-again
+# NEW PROJECT, key 1 = YES: an empty project on the four kits.
+hit 4
+hit 0
+wait 200
+tracks
+shot new-project
+# LOAD PROJECT: the browser, K1 to the 6210 SONGS bank, key 3 loads song 3.
+tap 9
+hit 2
+wait 60
+shot load-user
+turn 2 1
+wait 60
+shot load-songs
+hit 4
+wait 200
+tracks
+shot song3
+# SAVE PROJECT opens the save page.
+tap 9
+hit 0
+wait 60
+shot save-page
+# REC blinks fast while recording; GLO opens the mixer.
+tap 8
+tap 13
+wait 30
+shot rec
+tap 13
+tap 7
+wait 100
+shot mixer

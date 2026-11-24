@@ -124,15 +124,19 @@ static void text(unsigned x, unsigned y, const char *s, unsigned scale, uint16_t
 }
 /* Eight tracks stay visible on HOME. SEQ maps the sixteen white keys to one
  * quarter of the 64-step pattern. All drawing and edits run on app_control. */
-enum { OVERVIEW, STEPS, FM_EDIT, FM_ENV, FM_LFO, TONE_EDIT, MIX, BLE, PROJECT, NAME, EFFECTS, SOURCE, ACTIONS, STEP_EDIT, RHYTHM, FM_QUICK, PRESET_BROWSER, ARP_EDIT, STARTUP, DRUM };
+enum { OVERVIEW, STEPS, FM_EDIT, FM_ENV, FM_LFO, TONE_EDIT, MIX, BLE, PROJECT, NAME, EFFECTS, SOURCE, ACTIONS, STEP_EDIT, RHYTHM, FM_QUICK, PRESET_BROWSER, ARP_EDIT, STARTUP, DRUM, FILES };
 enum { OCT_DOWN, OCT_UP, FX, SCL, ENV, LFO, EDIT, GLO, HOME, SAVE, ARP, SEQ, PLAY, REC };
 #define BUTTON(b) (1U << (b))
 /* 6210 DRUM page (drum.inc). */
 struct groove_view;
+#define DP_DX7(t) 0 /* 6210 has no synth editors: DX7, 303, PSG and pluck pages are compiled out. */
 static void dp_init(void);
 static void dp_draw(const struct groove_view v[8]);
 static unsigned dp_phase(const struct groove_view *v);
-static unsigned dp_edit_down; /* EDIT held on the DRUM page */
+static const char *dp_song_name(unsigned song);
+static int dp_song_load(unsigned song);
+static void dp_menu_draw(void);
+static unsigned dp_item, dp_confirm; /* project menu entry, YES / NO asked */
 static const uint16_t colors[8] = {0x4287, 0x4287, 0x4287, 0x4287, 0x4287, 0x4287, 0x4287, 0x4287}; /* 6210: one ink */
 static const uint8_t white_keys[16] = {0, 2, 4, 6, 7, 9, 11, 12, 14, 16, 18, 19, 21, 23, 24, 26};
 /* FM1 EDIT key IDs 15,17,19,22,24,27,29,31,34,36 minus 14. */
@@ -216,7 +220,7 @@ static uint32_t project_drawn_revision;
 static void project_refresh(void)
 {
     if (project_factory) {
-        const char *name = groove_factory_name(project_slot);
+        const char *name = dp_song_name(project_slot);
         memset(project_stored, ' ', 12);
         if (name) memcpy(project_stored, name, strlen(name));
         project_stored[12] = 0;
@@ -224,8 +228,15 @@ static void project_refresh(void)
     } else project_stored_result = groove_project_info(project_slot, project_stored);
     project_drawn_revision = groove_project_revision();
 }
+/* 6210: the browser lists eight names at a time; read them once per refresh. */
+static char preset_names[16][13];
 static void preset_refresh(void)
 {
+    for (unsigned i = 0; i < 16; ++i) {
+        project_slot = i; project_factory = preset_bank;
+        project_refresh();
+        memcpy(preset_names[i], project_stored_result ? "-           " : project_stored, 13);
+    }
     project_slot = preset_slot;
     project_factory = preset_bank;
     project_refresh();
@@ -275,7 +286,7 @@ static void move_step(const struct groove_view *view, int delta, int pages)
 }
 static unsigned navigation_mode(void)
 {
-    return 0 || page == PROJECT || page == PRESET_BROWSER || page == MIX || page == NAME ||
+    return page == FILES || page == PROJECT || page == PRESET_BROWSER || page == MIX || page == NAME ||
         (page >= SOURCE && page <= RHYTHM) || (page == STEPS && !writing) || glo_down;
 }
 static unsigned encoder_active(const int16_t values[7])
@@ -936,23 +947,27 @@ static __attribute__((noinline)) void project_draw(void)
 }
 static __attribute__((noinline)) void preset_draw(void)
 {
-    uint32_t sig = signature(preset_slot | (preset_bank << 8),
-                             project_stored, 12);
+    uint32_t sig = signature(preset_slot | (preset_bank << 8) | (preset_current_slot << 9) | (preset_current_bank << 14) |
+                             (preset_loaded << 15), preset_names, sizeof preset_names);
     sig = signature(sig, &project_result, sizeof project_result);
     if (cache->middle_cache == sig) return;
     cache->middle_cache = sig;
     paint_fill(0, 30, 240, 210, BACK);
-    text(8, 42, preset_bank ? "FACTORY PRESETS" : "USER PROJECTS", 1, DIM, BACK);
-    number(8, 65, preset_slot + 1, 2, 2, ACCENT, BACK);
-    text(38, 65, "/16", 2, DIM, BACK);
-    text(8, 97, project_stored_result < 0 ? "READ ERROR" : project_stored, 2, TEXT, BACK);
-    text(8, 127, "SELECT / PRE LOAD", 1, TEXT, BACK);
-    text(8, 148, "PLAY LOAD  SAVE", 1, TEXT, BACK);
-    text(8, 170, "KEYS 1-16 LOAD", 1, DIM, BACK);
-    text(8, 191, "K1 BANK", 1, DIM, BACK);
-    text(8, 213, project_result == GROOVE_PROJECT_EMPTY ? "EMPTY SLOT" :
-         project_result ? "LOAD FAILED" : "HOME BACK", 1,
+    unsigned count = preset_bank ? 8U : 16U, first = preset_bank ? 0U : preset_slot & 8U;
+    text(8, 36, preset_bank ? "6210 SONGS" : first ? "USER 9-16" : "USER 1-8", 1, DIM, BACK);
+    text(150, 36, "K1 BANK", 1, DIM, BACK);
+    for (unsigned i = 0; i < 8 && first + i < count; ++i) {
+        unsigned slot = first + i, y = 48 + i * 20, on = slot == preset_slot;
+        unsigned loaded = preset_loaded && slot == preset_current_slot && preset_bank == preset_current_bank;
+        paint_fill(4, y, 232, 18, on ? TEXT : BACK);
+        number(8, y + 2, (int)slot + 1, 2, 2, on ? BACK : DIM, on ? TEXT : BACK);
+        text(40, y + 2, preset_names[slot], 2, on ? BACK : TEXT, on ? TEXT : BACK);
+        if (loaded) paint_fill(228, y + 6, 6, 6, on ? BACK : TEXT);
+    }
+    text(8, 214, project_result == GROOVE_PROJECT_EMPTY ? "EMPTY SLOT" : project_result ? "LOAD FAILED"
+         : preset_bank ? "KEYS 1-8 LOAD  PLAY = START" : "KEYS 1-16 LOAD  PLAY = START", 1,
          project_result ? AMBER : DIM, BACK);
+    text(8, 228, "SELECT / PRESETS MOVE  HOME BACK", 1, DIM, BACK);
 }
 static __attribute__((noinline)) void name_draw(void)
 {
@@ -1060,6 +1075,10 @@ static void leds(const struct groove_view *v, unsigned visible)
             unsigned hit = v->playing && phase < 90U && ((groove_drum_steps(track, d) >> v->play_step) & 1U);
             if ((d == drum) ^ hit) bits |= 1U << (d < 10 ? edit_keys[d] : 25U);
         }
+    } else if (visible == FILES) {
+        /* Keys 1..3 pick the menu entry (YES / NO when asking); the chosen one blinks. */
+        for (unsigned i = 0; i < (dp_confirm ? 2U : 3U); ++i)
+            if (i != (dp_confirm ? 0U : dp_item) || two) bits |= 1U << white_keys[i];
     } else if (visible == PRESET_BROWSER) {
         bits = 1U << white_keys[preset_slot];
     } else if (visible == MIX) {
@@ -1071,7 +1090,7 @@ static void leds(const struct groove_view *v, unsigned visible)
     }
     for (unsigned key = 0; key < 27; ++key)
         if (key_note[key] != 0xff) bits |= 1U << key;
-    if (visible == FM_EDIT) {
+    if (0 && visible == FM_EDIT) {
         for (unsigned i = 0; i < 10; ++i) bits &= ~(1U << edit_keys[i]);
         for (unsigned i = 0; i < 6; ++i)
             if (!(frame_controls.operators & (1U << i))) bits |= 1U << edit_keys[i];
@@ -1101,10 +1120,9 @@ static void leds(const struct groove_view *v, unsigned visible)
         | ((visible == STEPS || visible == ACTIONS || visible == STEP_EDIT || visible == RHYTHM || visible == DRUM) << SEQ)
         | ((writing && fast) << REC) | (beat << PLAY)
         | ((visible == MIX || (any_mute && dbl)) << GLO)
-        | ((visible == FM_EDIT || visible == TONE_EDIT || visible == FM_QUICK || visible == STEP_EDIT ||
-            (dp_edit_down && two)) << EDIT)
+        | ((visible == TONE_EDIT || visible == STEP_EDIT) << EDIT)
         | ((visible == FM_ENV) << ENV) | ((visible == FM_LFO) << LFO)
-        | ((visible == PROJECT || visible == SOURCE || (visible == ACTIONS && action_confirm) ||
+        | ((visible == PROJECT || visible == FILES || (visible == ACTIONS && action_confirm) ||
             (groove_project_dirty() && slow)) << SAVE);
     changed = bits ^ button_led_cache;
     for (unsigned key = 0; key < 14; ++key)
@@ -1124,7 +1142,7 @@ static __attribute__((noinline)) void edit_page_draw(unsigned visible)
         sig = sig * 33U + groove_sequence_count_in();
         sig = sig * 33U + frame_views[track].volume;
         if (notice) sig = signature(sig, notice, (unsigned)strlen(notice));
-        if (visible == FM_QUICK) {
+        if (0 && visible == FM_QUICK) {
             sig = signature(sig, frame_patch, 156);
             sig = sig * 33U + frame_views[track].program;
             sig = sig * 33U + frame_views[track].modified;
@@ -1138,7 +1156,7 @@ static __attribute__((noinline)) void edit_page_draw(unsigned visible)
     }
     paint_fill(0, 32, 240, 208, BACK);
     memset(cache->foot_cache, 0xff, sizeof cache->foot_cache);
-    if (visible == SOURCE) {
+    if (0 && visible == SOURCE) {
         text(8, 42, "SELECT SOUND SOURCE", 1, TEXT, BACK);
         text(8, 78, source_names[source_preview], 2, ACCENT, BACK);
         text(8, 120, "SAVE APPLY  HOME X", 1, TEXT, BACK);
@@ -1266,9 +1284,10 @@ static void draw_page_body(const struct fm1_ble_status *ble)
         memset(cache->meter_cache, 0xff, sizeof cache->meter_cache);
         memset(cache->hlv, 0xff, sizeof cache->hlv);
         if (visible == PROJECT || visible == PRESET_BROWSER)
-            text(8, 8, visible == PROJECT ? "SAVE PROJECT" : "PRESETS", 2, ACCENT, BACK);
+            text(8, 8, visible == PROJECT ? "SAVE PROJECT" : "LOAD PROJECT", 2, ACCENT, BACK);
     }
     if (visible == STARTUP) { boot_draw(); return; }
+    if (visible == FILES) { if (!paint_rendering) leds(&frame_views[track], visible); dp_menu_draw(); return; }
     const struct groove_view *views = frame_views, *v = &views[track];
     if (!paint_rendering) leds(v, visible);
     if (visible == DRUM) {
@@ -1288,7 +1307,7 @@ static void draw_page_body(const struct fm1_ble_status *ble)
         edit_page_draw(visible);
         return;
     }
-    if (visible == NAME) {
+    if (0 && visible == NAME) {
         name_draw();
         return;
     }
@@ -1300,7 +1319,7 @@ static void draw_page_body(const struct fm1_ble_status *ble)
         }
         return;
     }
-    if (visible == FM_LFO && v->type != GROOVE_DX7) {
+    if (visible == FM_LFO && !DP_DX7(track)) {
         track_lfo_draw();
         return;
     }
@@ -1310,10 +1329,8 @@ static void draw_page_body(const struct fm1_ble_status *ble)
         steps(v);
     else if (visible == MIX)
         mix_draw(views);
-    else if (visible == TONE_EDIT || (visible == FM_ENV && v->type != GROOVE_DX7)) {
+    else if (visible == TONE_EDIT || (visible == FM_ENV && !DP_DX7(track))) {
         tone_draw(patch);
-    } else {
-        fm_draw(patch, &controls);
     }
     /* Lower controls cannot intersect an upper LCD band. Avoid formatting
      * their labels and querying the engine once for every unrelated band. */
@@ -1381,7 +1398,7 @@ static void draw_page_body(const struct fm1_ble_status *ble)
             label = labels[t];
             color = colors[t];
             decimal(value, views[t].volume, 1);
-        } else if (visible == TONE_EDIT || (visible == FM_ENV && v->type != GROOVE_DX7)) {
+        } else if (visible == TONE_EDIT || (visible == FM_ENV && !DP_DX7(track))) {
             unsigned parameter = tone_parameter(col);
             const fm1_param_t *p = groove_tone_parameter(track, tone_part(), parameter);
             label = p ? p->name : "";
@@ -1394,7 +1411,7 @@ static void draw_page_body(const struct fm1_ble_status *ble)
             label = labels[col];
             decimal(value, controls.envelope[col], 1);
             strcat(value, "%");
-        } else if (visible == FM_EDIT || visible == FM_LFO) {
+        } else if (0 && (visible == FM_EDIT || visible == FM_LFO)) {
             unsigned parameter = fm_parameter(col);
             label = fm_pages[fm_group].label[col];
             if (parameter == 255)
@@ -1459,7 +1476,7 @@ static void draw_page_body(const struct fm1_ble_status *ble)
                        : visible == STEPS    ? "PRE STEP OCT PAGE"
                        : visible == MIX      ? "KEYS MUTE/SOLO"
                        : visible == FM_EDIT  ? "BLACK OP  EDIT BACK"
-                       : visible == FM_ENV && v->type != GROOVE_DX7 ? "ENV BACK  SEL TRACK"
+                       : visible == FM_ENV && !DP_DX7(track) ? "ENV BACK  SEL TRACK"
                        : visible == FM_ENV   ? "PRE ENV  HOME TRK"
                        : visible == TONE_EDIT && !advanced_edit
                            ? "HOLD EDIT MORE"
@@ -1532,9 +1549,9 @@ static void draw(const struct fm1_ble_status *ble)
     }
     memset(frame_patch, 0, sizeof frame_patch);
     memset(&frame_controls, 0, sizeof frame_controls);
-    if (visible == TONE_EDIT || (visible == FM_ENV && groove_source_type(track) != GROOVE_DX7))
+    if (visible == TONE_EDIT || (visible == FM_ENV && !DP_DX7(track)))
         groove_tone_copy(track, tone_part(), frame_patch);
-    else if (visible == FM_LFO && groove_source_type(track) != GROOVE_DX7)
+    else if (visible == FM_LFO && !DP_DX7(track))
         groove_lfo_copy(track, frame_patch);
     else if ((visible >= FM_EDIT && visible <= FM_LFO) || visible == NAME || visible == FM_QUICK)
         groove_fm_copy(track, frame_patch, &frame_controls);
@@ -1603,7 +1620,7 @@ static int release_keys(void) { return release_keys_except(0); }
  * Selecting a preset replaces the workspace without writing a project slot. */
 static int preset_load(unsigned start, uint32_t now)
 {
-    project_result = preset_bank ? groove_factory_load(preset_slot) : groove_project_load_slot(preset_slot);
+    project_result = preset_bank ? dp_song_load(preset_slot) : groove_project_load_slot(preset_slot);
     if (project_result) { page = PRESET_BROWSER; return project_result; }
     unsigned channels = 0; uint32_t keep = 0;
     for (unsigned t = 0; t < GROOVE_TRACKS; ++t)
@@ -1718,11 +1735,11 @@ void groove_screen_init(void)
 static void select_track(int delta)
 {
     unsigned before = track;
-    track = (unsigned)clamp((int)track + delta, 0, 7);
-    if (page == FM_QUICK && groove_source_type(track) != GROOVE_DX7) page = TONE_EDIT;
-    if (page == TONE_EDIT && !advanced_edit && groove_source_type(track) == GROOVE_DX7) page = FM_QUICK;
-    if ((groove_source_type(track) != GROOVE_DX7 && page == FM_EDIT) ||
-        (groove_source_type(track) == GROOVE_DX7 && page == TONE_EDIT)) page = DRUM;
+    track = (unsigned)clamp((int)track + delta, 0, 3); /* 6210: four drum tracks */
+    if (page == FM_QUICK && !DP_DX7(track)) page = TONE_EDIT;
+    if (page == TONE_EDIT && !advanced_edit && DP_DX7(track)) page = FM_QUICK;
+    if ((!DP_DX7(track) && page == FM_EDIT) ||
+        (DP_DX7(track) && page == TONE_EDIT)) page = DRUM;
     if (before != track) {
         cursor %= groove_sequence_length(track);
         cache->middle_cache = ~0U; source_result = 0;
@@ -1810,24 +1827,8 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
     }
     /* A project received over MIDI can replace the current instrument while
      * its editor is open. Leave editors that cannot apply to the new source. */
-    if (page == NAME && groove_source_type(track) != GROOVE_DX7)
+    if (page == NAME && !DP_DX7(track))
         page = DRUM;
-    /* 6210: EDIT held on DRUM: SAVE loads the 6210 kit, PRESETS picks the engine. */
-    if (dp_edit_gesture(controls, pressed, now, &play_handled)) {
-        /* EDIT + PRESETS on DRUM: change the track's engine (was on the old overview). */
-        if (page == DRUM && dp_edit_down && controls->encoders[6]) {
-            dp_edit_used = 1;
-            blocked_keys |= controls->keys;
-            if (!release_keys()) return 0;
-            source_preview = (unsigned)(((int)groove_source_type(track) + controls->encoders[6] % GROOVE_SOURCES +
-                                         GROOVE_SOURCES) % GROOVE_SOURCES);
-            source_result = 0;
-            page = SOURCE;
-            cache->shown_page = ~0U;
-            operator_held = operator_long = 0;
-        }
-        goto controls_done;
-    }
     if ((controls->buttons & (BUTTON(HOME) | BUTTON(SAVE))) == (BUTTON(HOME) | BUTTON(SAVE)) &&
         (pressed & (BUTTON(HOME) | BUTTON(SAVE)))) {
         int r = groove_edit_undo();
@@ -1845,7 +1846,7 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
     }
     /* Keep the original HOME+PRESETS shortcut, including after HOME opens
      * the browser. A source replacement still requires an explicit SAVE. */
-    if ((controls->buttons & BUTTON(HOME)) && controls->encoders[6] &&
+    if (0 && (controls->buttons & BUTTON(HOME)) && controls->encoders[6] &&
         !(controls->buttons & BUTTON(PLAY))) {
         source_preview = (unsigned)((int)groove_source_type(track) +
             controls->encoders[6] % GROOVE_SOURCES + GROOVE_SOURCES) % GROOVE_SOURCES;
@@ -1876,7 +1877,7 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
         if (tapped) page = page == MIX ? music_page : MIX;
     }
     if ((controls->buttons & (BUTTON(EDIT) | BUTTON(REC))) == (BUTTON(EDIT) | BUTTON(REC)) &&
-        (pressed & (BUTTON(EDIT) | BUTTON(REC))) && groove_source_type(track) == GROOVE_DX7) {
+        (pressed & (BUTTON(EDIT) | BUTTON(REC))) && DP_DX7(track)) {
         writing = rec_before_press;
         edit_down = glo_down = 0;
         page = NAME; name_cursor = 0;
@@ -1899,7 +1900,7 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
             if (page != EFFECTS) effects_page = 0;
             open_subpage(EFFECTS);
         } else if (pressed & BUTTON(SCL)) {
-            if (groove_source_type(track) == GROOVE_DX7) {
+            if (DP_DX7(track)) {
                 op = operator_selected[track] < 6 ? operator_selected[track] : 0;
                 operator_selected[track] = (uint8_t)op;
                 operator_page[track][op] = (uint8_t)(page == FM_EDIT && fm_group == 4 ? 5 : 4);
@@ -1909,7 +1910,7 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
                 tone_pages[track][tone_slot()] = groove_source_type(track) == GROOVE_303 ? 1 : 0;
             }
         } else if (pressed & BUTTON(EDIT)) {
-            unsigned edit = groove_source_type(track) == GROOVE_DX7 ? FM_QUICK : TONE_EDIT;
+            unsigned edit = DP_DX7(track) ? FM_QUICK : TONE_EDIT;
             edit_down = 1; edit_long = 0; edit_ms = now;
             page = page == FM_QUICK || page == FM_EDIT || page == edit ? music_page : edit;
             advanced_edit = 0;
@@ -1924,7 +1925,7 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
     if (edit_down && !edit_long && now - edit_ms >= 600U &&
         !(controls->buttons & (BUTTON(SEQ) | BUTTON(REC) | BUTTON(HOME)))) {
         edit_long = advanced_edit = 1;
-        page = groove_source_type(track) == GROOVE_DX7 ? FM_EDIT : TONE_EDIT;
+        page = DP_DX7(track) ? FM_EDIT : TONE_EDIT;
         goto controls_done;
     }
     if (arp_tap) {
@@ -1946,12 +1947,13 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
     }
     if (page != STEPS && page != ACTIONS && page != DRUM)
         octave = clamp(octave + !!(pressed & BUTTON(OCT_UP)) - !!(pressed & BUTTON(OCT_DOWN)), -2, 2);
-    if ((pressed & BUTTON(SAVE)) && page != PROJECT && 1 &&
-        page != SOURCE && page != ACTIONS) {
-        project_return = page; page = PROJECT; project_result = 0;
-        project_reload = project_operation = 0;
-        project_slot = groove_project_slot(); project_factory = name_cursor = 0;
-        glo_down = 0; project_refresh();
+    if (page == FILES) {
+        dp_menu_controls(controls, pressed, key_down & ~blocked_keys, now);
+        goto controls_done;
+    }
+    /* 6210: SAVE opens the project menu (save, load, new). */
+    if ((pressed & BUTTON(SAVE)) && page != PROJECT && page != ACTIONS) {
+        glo_down = 0; dp_menu_open();
         goto controls_done;
     }
     if (pressed & BUTTON(GLO)) {
@@ -1988,7 +1990,7 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
         play_handled = 1;
         int delta = controls->encoders[0] + controls->encoders[6];
         unsigned bank = (unsigned)clamp((int)preset_bank + controls->encoders[2], 0, 1);
-        unsigned slot = (unsigned)clamp((int)preset_slot + delta, 0, GROOVE_PROJECT_SLOTS - 1);
+        unsigned slot = (unsigned)clamp((int)preset_slot + delta, 0, bank ? 7 : GROOVE_PROJECT_SLOTS - 1);
         unsigned load = 0, start = 0;
         for (unsigned i = 0; i < 16; ++i)
             if ((key_down & ~blocked_keys) & (1U << white_keys[i])) {
@@ -2008,7 +2010,7 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
         }
         goto controls_done;
     }
-    if (page == SOURCE) {
+    if (0 && page == SOURCE) {
         int delta = controls->encoders[0] + controls->encoders[1] + controls->encoders[3] + controls->encoders[6];
         source_preview = (unsigned)((int)source_preview + delta % GROOVE_SOURCES + GROOVE_SOURCES) % GROOVE_SOURCES;
         if (pressed & BUTTON(SAVE)) {
@@ -2060,7 +2062,7 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
             else if (action == 15) { r = groove_timbre_export(track, (uint8_t *)&tone_clip, sizeof tone_clip); tone_clip_ready = !r; }
             else if (action == 16) r = tone_clip_ready ? groove_timbre_import(track, (uint8_t *)&tone_clip, sizeof tone_clip) : -1;
             else if (action == 17) {
-                if (groove_source_type(track) == GROOVE_DX7) { page = NAME; name_cursor = 0; }
+                if (DP_DX7(track)) { page = NAME; name_cursor = 0; }
                 else r = -1;
             } else {
                 if (!post(0xff, 0, 0, 1)) return 0;
@@ -2114,7 +2116,7 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
             notice_until = now + 2000U;
             project_operation = 0;
         }
-    } else if (page == NAME) {
+    } else if (0 && page == NAME) {
         name_cursor = (unsigned)clamp((int)name_cursor + controls->encoders[0], 0, 9);
         if (controls->encoders[2]) {
             uint8_t patch[156];
@@ -2166,7 +2168,7 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
     } else {
         if (1) {
             unsigned tracks = 0 || page == STEPS || page == FM_QUICK || page == ARP_EDIT ||
-                page == EFFECTS || page == FM_ENV || (page == FM_LFO && groove_source_type(track) != GROOVE_DX7) ||
+                page == EFFECTS || page == FM_ENV || (page == FM_LFO && !DP_DX7(track)) ||
                 (page == TONE_EDIT && !advanced_edit);
             select_track(tracks ? controls->encoders[0] : 0);
             {
@@ -2232,7 +2234,7 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
                             notice = "MELODIC ONLY"; notice_until = now + 2000U;
                         } else groove_arp_edit(track, i, controls->encoders[2 + i]);
                     }
-                } else if (page == NAME) {
+                } else if (0 && page == NAME) {
                     name_cursor = (unsigned)clamp((int)name_cursor + controls->encoders[0], 0, 9);
                     if (controls->encoders[2]) {
                         uint8_t name_patch[156];
@@ -2240,7 +2242,7 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
                             groove_fm_name_edit(track, name_cursor,
                                 edit_character((char)name_patch[145 + name_cursor], controls->encoders[2]));
                     }
-                } else if (page == FM_QUICK) {
+                } else if (0 && page == FM_QUICK) {
                     static const uint8_t parameters[] = {134, 135, 144};
                     for (unsigned i = 0; i < 3; ++i) groove_fm_edit(track, parameters[i], controls->encoders[2 + i]);
                     groove_control_edit(track, 0, controls->encoders[5], 0);
@@ -2261,10 +2263,10 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
                         groove_control_edit(track, 0, controls->encoders[4], 0);
                         groove_effects_edit(3, controls->encoders[5]);
                     }
-                } else if (page == FM_LFO && groove_source_type(track) != GROOVE_DX7) {
+                } else if (page == FM_LFO && !DP_DX7(track)) {
                     for (unsigned i = 0; i < 4; ++i)
                         groove_lfo_edit(track, i, i < 2 ? fm_encoder_delta(2 + i, controls->encoders[2 + i]) : controls->encoders[2 + i]);
-                } else if (page == TONE_EDIT || (page == FM_ENV && groove_source_type(track) != GROOVE_DX7)) {
+                } else if (page == TONE_EDIT || (page == FM_ENV && !DP_DX7(track))) {
                     if (page == TONE_EDIT && groove_source_type(track) == GROOVE_303)
                         for (unsigned i = 8; i < 10; ++i)
                             if ((key_down & ~blocked_keys) & (1U << edit_keys[i]))
@@ -2302,7 +2304,7 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
                                     p->names ? controls->encoders[2 + col]
                                              : fm_encoder_delta(2 + col, controls->encoders[2 + col]));
                         }
-                } else if (page >= FM_EDIT && page <= FM_LFO) {
+                } else if (0 && page >= FM_EDIT && page <= FM_LFO) {
                     if (page == FM_EDIT) {
                         for (unsigned i = 0; i < 10; ++i) {
                             uint32_t bit = 1U << edit_keys[i];
@@ -2392,12 +2394,12 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
                         }
                     }
                 }
-                if (page == FM_ENV && groove_source_type(track) == GROOVE_DX7 && controls->encoders[6])
+                if (page == FM_ENV && DP_DX7(track) && controls->encoders[6])
                     groove_adsr_enable(track, controls->encoders[6] > 0);
                 if (controls->encoders[6] && page != ARP_EDIT && page != STEPS && page != FM_ENV && page != FM_LFO && page != EFFECTS && page != NAME && !(page == TONE_EDIT && groove_pad_count(track) != 0))
                     groove_control_edit(track, controls->encoders[6], 0, 0);
                 if (controls->encoders[1] && page != STEPS && page != ARP_EDIT) {
-                    if (groove_source_type(track) == GROOVE_DX7)
+                    if (DP_DX7(track))
                         groove_fm_edit(track, 134, fm_encoder_delta(1, controls->encoders[1]));
                     else
                         groove_control_edit(track, 0, 0, controls->encoders[1]);
@@ -2623,9 +2625,9 @@ int groove_screen_open(unsigned target)
     else if (target > ARP_EDIT || target == PROJECT) return -1;
     boot_active = 0;
     unsigned quick = target == FM_QUICK;
-    if (quick && groove_source_type(track) != GROOVE_DX7) target = TONE_EDIT;
+    if (quick && !DP_DX7(track)) target = TONE_EDIT;
     if ((target == FM_EDIT || target == NAME) &&
-        groove_source_type(track) != GROOVE_DX7) {
+        !DP_DX7(track)) {
         if (target == FM_EDIT) target = TONE_EDIT;
         else return -1;
     }

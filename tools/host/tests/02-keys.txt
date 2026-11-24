@@ -1,24 +1,15 @@
-# 6210 keyboard on the DRUM page.
+# DRUM page keyboard: black keys pick drums, white keys toggle steps.
 boot
 wait 300
-# Black key 2 (key 3) picks the low tom... actually black keys pick drums in order:
-# key 1 = BD, 3 = SD, 5 = LT. Pick SD and write steps 5 and 13 (white keys 7, 21).
 hit 3
 hit 7
 hit 21
 shot snare-written
 expect-led 21 1
-# K1 to CLAP, K4 tune up, K2 velocity down on the cursor step.
 turn 2 3
 turn 5 6
 turn 3 -20
-shot clap-tuned
-# Track 2 (909 style) and track 3 (303 acid view).
-turn 0 1
-shot t2-909
-turn 0 1
-shot t3-acid
-# Next page of steps on a 32-step track: ALGORITHM +1, then OCT +.
+shot tuned
 turn 1 1
 tap 1
-shot t3-page2
+shot page2

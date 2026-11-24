@@ -30,6 +30,7 @@ const float *sim_render(void);
 const uint16_t *sim_pixels(void);
 const uint8_t *sim_state(void);
 int sim_select(unsigned track, unsigned source);
+unsigned groove_track_role(unsigned track);
 
 static unsigned elapsed;
 static void run(unsigned ms)
@@ -93,7 +94,7 @@ int main(void)
             for (unsigned t = 0; t < 8; ++t) {
                 const uint8_t *v = state + 8 + t * 20;
                 uint64_t steps; memcpy(&steps, v + 12, 8);
-                printf("T%u type %u prog %u mute %u solo %u playing %u steps %d\n", t + 1, v[0], v[1], v[4], v[5], v[6],
+                printf("T%u type %u role %u mute %u solo %u playing %u steps %d\n", t + 1, v[0], groove_track_role(t), v[4], v[5], v[6],
                        __builtin_popcountll(steps));
             }
         } else { fprintf(stderr, "line %u: cannot read '%s'\n", number, word); return 2; }

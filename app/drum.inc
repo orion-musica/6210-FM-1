@@ -1,32 +1,30 @@
 /* SPDX-License-Identifier: GPL-3.0-only WITH GPL-3.0-linking-exception
- * 6210 Drum Peter - DRUM page for FM1 Open (two-tone LCD edition).
+ * 6210 Drum Peter - DRUM page, kits, songs and the project menu for FM1 Open
+ * (two-tone LCD edition).
  *
  * Included once by screen.c, after its drawing helpers and before
  * apply_controls(). Everything here runs on the control task and uses only
  * the public instrument API (instrument.h). The engine's own sequencer plays
  * the notes, so timing stays sample accurate.
  *
- * DRUM page, drum tracks (DRUM 808 or SAMPLER):
+ * Four drum tracks, all on the DRUM 808 engine: T1 808, T2 909, T3 606 and
+ * T4 707 (the last three are voicings). Tracks 5..8 are switched off.
+ *
+ * DRUM page:
  *   16 white keys  steps of the selected drum (one page of 16)
- *   black keys     pick a drum and hear it (11 drums on 808, 8 on SAMPLER)
+ *   black keys     pick a drum and hear it (11 drums)
  *   OCT - / +      previous / next 16 steps
- *   SELECT         track 1..8        ALGORITHM  length 16/32/48/64
- *   PRESETS        kit / program     K1 drum, K2 velocity, K3 chance, K4 tune
- * DRUM page, melodic tracks (303, DX7, PSG, PLUCK):
- *   white keys toggle steps with the last played note; black keys play notes.
- *   K1 note, K2 velocity, K3 chance, K4 cutoff (303/PSG/PLUCK) or volume (DX7).
- * EDIT held: SAVE loads the 6210 kit (T1 808, T2 909 style, T3 303),
- *            PRESETS changes the track's engine. A short EDIT tap opens the
- *            sound editor as before.
+ *   SELECT         track 1..4        ALGORITHM  length 16/32/48/64
+ *   PRESETS        kit program       K1 drum, K2 velocity, K3 chance, K4 tune
+ * SAVE opens the project menu: SAVE PROJECT, LOAD PROJECT (user slots and the
+ * eight built-in songs) and NEW PROJECT (asks YES / NO first).
  */
 #include "drum808.h"
 
 enum { DP_C_HEAD, DP_C_TITLE, DP_C_ROW, DP_C_BOX = DP_C_ROW + 11, DP_C_HINT, DP_C_REST, DP_C_COUNT };
 _Static_assert(DP_C_COUNT <= 16, "DRUM page cache slots");
 
-static unsigned dp_edit_used;
-static uint32_t dp_note_at;
-static const char *dp_note_top, *dp_note_mid;
+enum { DP_TRACKS = 4, DP_SONGS = 8 };
 static uint8_t dp_audition[GROOVE_PADS];
 static unsigned dp_setup_checked;
 static uint32_t dp_step_at, dp_step_ms = 115;
@@ -34,20 +32,13 @@ static unsigned dp_step_seen = 255;
 
 static void dp_init(void)
 {
-    dp_edit_down = dp_edit_used = 0;
-    dp_note_at = 0;
     memset(dp_audition, 0xff, sizeof dp_audition);
-    dp_setup_checked = 0;
-}
-static void dp_note(const char *top, const char *mid, uint32_t now)
-{
-    dp_note_top = top; dp_note_mid = mid;
-    dp_note_at = now | 1U;
+    dp_setup_checked = dp_item = dp_confirm = 0;
 }
 static unsigned dp_pads(void) { return groove_pad_count(track); }
 static const char *dp_source_short(unsigned type)
 {
-    static const char *const names[] = {"DX7", "303", "808", "PSG", "PLK", "SMP"};
+    static const char *const names[] = {"DX7", "303", "DRM", "PSG", "PLK", "SMP"};
     return type < GROOVE_SOURCES ? names[type] : "---";
 }
 static unsigned dp_black(unsigned key)
@@ -56,8 +47,13 @@ static unsigned dp_black(unsigned key)
     for (unsigned i = 0; i < 10; ++i) if (edit_keys[i] == key) return i;
     return key == 25 ? 10U : 255U;
 }
+static const char *dp_kit_name(unsigned t)
+{
+    static const char *const names[DP_TRACKS] = {"808", "909", "606", "707"};
+    return t < DP_TRACKS ? names[t] : "OFF";
+}
 
-/* ---- The 6210 kit -------------------------------------------------------- */
+/* ---- Kits ------------------------------------------------------------------ */
 /* Set one sound parameter, found by name, to an absolute value. */
 static void dp_tone_set(unsigned t, unsigned part, const char *name, unsigned value)
 {
@@ -68,50 +64,150 @@ static void dp_tone_set(unsigned t, unsigned part, const char *name, unsigned va
     for (unsigned p = 0; p < count; ++p) {
         const fm1_param_t *d = groove_tone_parameter(t, part, p);
         if (!d || !d->name) continue;
-        const char *a = d->name, *b = name;
-        while (*a && *b && (*a | 32) == (*b | 32)) { ++a; ++b; }
-        if (*a || *b) continue;
+        if (name) {
+            const char *a = d->name, *b = name;
+            while (*a && *b && (*a | 32) == (*b | 32)) { ++a; ++b; }
+            if (*a || *b) continue;
+        } else value = d->def; /* No name: every parameter back to its default. */
         if (value > d->max) value = d->max;
         if (value != values[p]) groove_tone_edit(t, part, p, (int)value - (int)values[p]);
-        return;
+        if (name) return;
     }
 }
-/* 909 voicing for T2: the same 808 engine set tighter, brighter and harder.
- * Each entry: part, parameter name, value. */
-static const struct { uint8_t part; char name[7]; uint8_t value; } dp_909[] = {
-    {D8_BD, "Decay", 46}, {D8_BD, "Tune", 84}, {D8_BD, "Attack", 96}, {D8_BD, "Tone", 74}, {D8_BD, "Drive", 28},
-    {D8_SD, "Tone", 96}, {D8_SD, "Snappy", 112}, {D8_SD, "Tune", 82}, {D8_SD, "Decay", 74},
-    {D8_CP, "Decay", 52}, {D8_CP, "Tune", 74}, {D8_CH, "Decay", 30}, {D8_CH, "Tune", 92},
-    {D8_OH, "Decay", 58}, {D8_OH, "Tune", 92}, {D8_CY, "Tune", 84}, {D8_RS, "Decay", 30}, {D8_RS, "Tune", 80}};
-/* Starter groove, one bit per step (bit 0 = step 1): track, pad, steps, accents. */
-static const struct { uint8_t track, pad; uint16_t steps, accents; } dp_groove[] = {
-    {0, D8_BD, 0x1111, 0x0101}, {0, D8_CH, 0x4444, 0}, {0, D8_RS, 0x4080, 0},
-    {1, D8_CP, 0x1010, 0x1010}, {1, D8_OH, 0x4444, 0}, {1, D8_CH, 0x0101, 0}};
-/* T1 DRUM 808, T2 DRUM 808 voiced like a 909, T3 BASS 303 with a short
- * acid line. Tracks 4..8 are left as they are. */
-static int dp_kit_load(void)
+/* 909, 606 and 707 voicings of the 808 engine: kit (1..3), part, name, value. */
+static const struct { uint8_t kit, part; char name[7]; uint8_t value; } dp_voicing[] = {
+    /* 909: short punchy kick, bright snappy snare, crisp hats. */
+    {1, D8_BD, "Decay", 46}, {1, D8_BD, "Tune", 84}, {1, D8_BD, "Attack", 96}, {1, D8_BD, "Tone", 74}, {1, D8_BD, "Drive", 28},
+    {1, D8_SD, "Tone", 96}, {1, D8_SD, "Snappy", 112}, {1, D8_SD, "Tune", 82}, {1, D8_SD, "Decay", 74},
+    {1, D8_CP, "Decay", 52}, {1, D8_CP, "Tune", 74}, {1, D8_CH, "Decay", 30}, {1, D8_CH, "Tune", 92},
+    {1, D8_OH, "Decay", 58}, {1, D8_OH, "Tune", 92}, {1, D8_CY, "Tune", 84}, {1, D8_RS, "Decay", 30}, {1, D8_RS, "Tune", 80},
+    /* 606: small, high and dry. */
+    {2, D8_BD, "Decay", 30}, {2, D8_BD, "Tune", 92}, {2, D8_BD, "Tone", 84},
+    {2, D8_SD, "Tune", 92}, {2, D8_SD, "Tone", 104}, {2, D8_SD, "Snappy", 100}, {2, D8_SD, "Decay", 50},
+    {2, D8_LT, "Tune", 88}, {2, D8_LT, "Decay", 40}, {2, D8_HT, "Tune", 96}, {2, D8_HT, "Decay", 36},
+    {2, D8_CH, "Decay", 20}, {2, D8_CH, "Tune", 100}, {2, D8_OH, "Decay", 40}, {2, D8_OH, "Tune", 100},
+    {2, D8_CY, "Decay", 50}, {2, D8_CY, "Tune", 96},
+    /* 707: round, punchy and clean. */
+    {3, D8_BD, "Decay", 55}, {3, D8_BD, "Tune", 70}, {3, D8_BD, "Attack", 110}, {3, D8_BD, "Tone", 60}, {3, D8_BD, "Drive", 10},
+    {3, D8_SD, "Tone", 80}, {3, D8_SD, "Snappy", 96}, {3, D8_SD, "Decay", 60}, {3, D8_SD, "Tune", 70},
+    {3, D8_CP, "Decay", 60}, {3, D8_RS, "Decay", 35}, {3, D8_RS, "Tune", 75}, {3, D8_CB, "Tune", 70},
+    {3, D8_LT, "Tune", 72}, {3, D8_LT, "Decay", 60}, {3, D8_CH, "Decay", 36}, {3, D8_CH, "Tune", 80},
+    {3, D8_OH, "Decay", 64}, {3, D8_OH, "Tune", 80}, {3, D8_CY, "Decay", 90}};
+static void dp_voice(unsigned t)
 {
-    static const uint8_t engines[3] = {GROOVE_808, GROOVE_808, GROOVE_303};
-    static const uint8_t acid[16] = {36, 0, 36, 48, 0, 39, 36, 0, 43, 0, 36, 46, 0, 39, 41, 0};
-    for (unsigned t = 0; t < 3; ++t) {
-        if (groove_source_type(t) != engines[t] && groove_source_set(t, engines[t])) return -1;
+    for (unsigned part = 0; part <= D8_KIT; ++part) dp_tone_set(t, part, 0, 0);
+    for (unsigned i = 0; i < sizeof dp_voicing / sizeof dp_voicing[0]; ++i)
+        if (dp_voicing[i].kit == t) dp_tone_set(t, dp_voicing[i].part, dp_voicing[i].name, dp_voicing[i].value);
+}
+
+/* ---- Songs ----------------------------------------------------------------- */
+static const struct { char name[12]; uint8_t tempo, swing, first, count; } dp_songs[] = {
+    {"HYPNO 132", 132, 0, 0, 6},
+    {"HARD 145", 145, 0, 6, 6},
+    {"ELECTRO 126", 126, 0, 12, 6},
+    {"HOUSE 124", 124, 16, 18, 5},
+    {"MINIMAL 128", 128, 8, 23, 6},
+    {"BREAKS 136", 136, 0, 29, 5},
+    {"DUB 118", 118, 10, 34, 5},
+    {"BOOM BAP 90", 90, 20, 39, 5},
+};
+static const struct { uint8_t track, pad; uint16_t steps, accents; } dp_lines[] = {
+    {1, D8_BD, 0x1111, 0x0101}, /* HYPNO 13 909 BD X...x...X...x... */
+    {1, D8_OH, 0x4444, 0x0000}, /* HYPNO 13 909 OH ..x...x...x...x. */
+    {2, D8_CH, 0xffff, 0x4444}, /* HYPNO 13 606 CH xxXxxxXxxxXxxxXx */
+    {0, D8_RS, 0x2420, 0x0000}, /* HYPNO 13 808 RS .....x....x..x.. */
+    {3, D8_CP, 0x1010, 0x0000}, /* HYPNO 13 707 CP ....x.......x... */
+    {0, D8_LT, 0x0080, 0x0000}, /* HYPNO 13 808 LT .......x........ */
+    {1, D8_BD, 0x1111, 0x1111}, /* HARD 145 909 BD X...X...X...X... */
+    {0, D8_BD, 0xc444, 0x0000}, /* HARD 145 808 BD ..x...x...x...xx */
+    {3, D8_CP, 0x1010, 0x1010}, /* HARD 145 707 CP ....X.......X... */
+    {1, D8_CH, 0xffff, 0x0000}, /* HARD 145 909 CH xxxxxxxxxxxxxxxx */
+    {1, D8_CY, 0x4444, 0x0000}, /* HARD 145 909 CY ..x...x...x...x. */
+    {2, D8_OH, 0x4444, 0x0000}, /* HARD 145 606 OH ..x...x...x...x. */
+    {0, D8_BD, 0x0481, 0x0001}, /* ELECTRO  808 BD X......x..x..... */
+    {0, D8_SD, 0x1010, 0x1010}, /* ELECTRO  808 SD ....X.......X... */
+    {0, D8_CH, 0xd555, 0x0000}, /* ELECTRO  808 CH x.x.x.x.x.x.x.xx */
+    {0, D8_CB, 0x0208, 0x0000}, /* ELECTRO  808 CB ...x.....x...... */
+    {2, D8_HT, 0x4000, 0x0000}, /* ELECTRO  606 HT ..............x. */
+    {3, D8_CP, 0x1010, 0x0000}, /* ELECTRO  707 CP ....x.......x... */
+    {1, D8_BD, 0x1111, 0x0101}, /* HOUSE 12 909 BD X...x...X...x... */
+    {3, D8_CP, 0x1010, 0x1010}, /* HOUSE 12 707 CP ....X.......X... */
+    {1, D8_OH, 0x4444, 0x0000}, /* HOUSE 12 909 OH ..x...x...x...x. */
+    {2, D8_CH, 0x6d6d, 0x0000}, /* HOUSE 12 606 CH x.xx.xx.x.xx.xx. */
+    {3, D8_RS, 0x4080, 0x0000}, /* HOUSE 12 707 RS .......x......x. */
+    {0, D8_BD, 0x1111, 0x0101}, /* MINIMAL  808 BD X...x...X...x... */
+    {3, D8_RS, 0x2424, 0x0000}, /* MINIMAL  707 RS ..x..x....x..x.. */
+    {2, D8_CH, 0xaaaa, 0x0000}, /* MINIMAL  606 CH .x.x.x.x.x.x.x.x */
+    {1, D8_CP, 0x0010, 0x0000}, /* MINIMAL  909 CP ....x........... */
+    {0, D8_CB, 0x0200, 0x0000}, /* MINIMAL  808 CB .........x...... */
+    {2, D8_OH, 0x4000, 0x0000}, /* MINIMAL  606 OH ..............x. */
+    {1, D8_BD, 0x0441, 0x0001}, /* BREAKS 1 909 BD X.....x...x..... */
+    {1, D8_SD, 0x1290, 0x1010}, /* BREAKS 1 909 SD ....X..x.x..X... */
+    {2, D8_CH, 0x5555, 0x0000}, /* BREAKS 1 606 CH x.x.x.x.x.x.x.x. */
+    {3, D8_OH, 0x4000, 0x0000}, /* BREAKS 1 707 OH ..............x. */
+    {0, D8_RS, 0x2082, 0x0000}, /* BREAKS 1 808 RS .x.....x.....x.. */
+    {0, D8_BD, 0x1111, 0x0101}, /* DUB 118  808 BD X...x...X...x... */
+    {3, D8_RS, 0x0408, 0x0000}, /* DUB 118  707 RS ...x......x..... */
+    {1, D8_OH, 0x4444, 0x0000}, /* DUB 118  909 OH ..x...x...x...x. */
+    {2, D8_CH, 0xaaaa, 0x0000}, /* DUB 118  606 CH .x.x.x.x.x.x.x.x */
+    {0, D8_CP, 0x1010, 0x0000}, /* DUB 118  808 CP ....x.......x... */
+    {0, D8_BD, 0x2301, 0x0001}, /* BOOM BAP 808 BD X.......xx...x.. */
+    {3, D8_SD, 0x1010, 0x1010}, /* BOOM BAP 707 SD ....X.......X... */
+    {2, D8_CH, 0x5555, 0x0000}, /* BOOM BAP 606 CH x.x.x.x.x.x.x.x. */
+    {1, D8_RS, 0x4080, 0x0000}, /* BOOM BAP 909 RS .......x......x. */
+    {0, D8_OH, 0x4000, 0x0000}, /* BOOM BAP 808 OH ..............x. */
+};
+
+static const char *dp_song_name(unsigned song) { return song < DP_SONGS ? dp_songs[song].name : 0; }
+/* An empty project: the four kits with no steps, ARP off, nothing muted,
+ * tracks 5..8 off. Saved slots in Flash are not touched. */
+static void dp_new(unsigned tempo, unsigned swing, const char *name)
+{
+    for (unsigned t = 0; t < GROOVE_TRACKS; ++t) {
+        struct groove_view v = {0};
+        groove_get_view(t, 0, &v);
+        if (groove_arp_enabled(t)) groove_arp_set(t, 0);
+        if (v.muted) groove_mix_toggle(t, 0);
+        if (v.solo) groove_mix_toggle(t, 1);
+        int role = t < DP_TRACKS ? GROOVE_TRACK_NORMAL : GROOVE_TRACK_OFF;
+        if (t < DP_TRACKS || groove_track_role(t) != GROOVE_TRACK_OFF) {
+            if (groove_track_role(t) == GROOVE_TRACK_NORMAL) groove_edit_clear(t, 0, 2);
+            groove_settings_track(t, 0, role - (int)groove_track_role(t));
+        }
+        if (t >= DP_TRACKS) continue;
+        if (groove_source_type(t) != GROOVE_808) groove_source_set(t, GROOVE_808);
         groove_edit_clear(t, 0, 2);
         groove_sequence_length_set(t, 16);
+        dp_voice(t);
     }
-    for (unsigned i = 0; i < sizeof dp_909 / sizeof dp_909[0]; ++i)
-        dp_tone_set(1, dp_909[i].part, dp_909[i].name, dp_909[i].value);
-    for (unsigned i = 0; i < sizeof dp_groove / sizeof dp_groove[0]; ++i)
-        for (unsigned s = 0; s < 16; ++s)
-            if ((dp_groove[i].steps >> s) & 1U)
-                groove_sequence_edit(dp_groove[i].track, s, groove_pad_note(dp_groove[i].track, dp_groove[i].pad),
-                                     (dp_groove[i].accents >> s) & 1U ? 127U : 96U);
-    for (unsigned s = 0; s < 16; ++s)
-        if (acid[s]) groove_sequence_edit(2, s, acid[s], s % 4 == 3 || s == 0 ? 127U : 96U);
+    struct groove_view v = {0};
+    groove_get_view(0, 0, &v);
+    if (!v.clock_mode && v.tempo) groove_tempo_edit((int)tempo - (int)v.tempo);
+    groove_sequence_setting_edit(0, (int)swing - (int)groove_sequence_setting(0));
+    for (unsigned i = 0; i < 12; ++i) {
+        char c = *name ? *name++ : ' ';
+        groove_project_rename(i, c);
+    }
+    track = drum = cursor = 0; step_follow = 1;
+    selected_note = groove_pad_note(0, 0);
+}
+static int dp_song_load(unsigned song)
+{
+    if (song >= DP_SONGS) return GROOVE_PROJECT_EMPTY;
+    groove_edit_checkpoint(0);
+    dp_new(dp_songs[song].tempo, dp_songs[song].swing, dp_songs[song].name);
+    /* Every hit at velocity 96, then the accents again at 127 (velocity is per step). */
+    for (unsigned pass = 0; pass < 2; ++pass)
+        for (unsigned i = dp_songs[song].first; i < dp_songs[song].first + dp_songs[song].count; ++i) {
+            unsigned bits = pass ? dp_lines[i].accents : dp_lines[i].steps;
+            for (unsigned s = 0; s < 16; ++s)
+                if ((bits >> s) & 1U)
+                    groove_sequence_edit(dp_lines[i].track, s, groove_pad_note(dp_lines[i].track, dp_lines[i].pad), pass ? 127U : 96U);
+        }
     return 0;
 }
 /* A fresh start has an empty project (no notes on any track). The first time
- * 6210 sees one it turns it into the drum kit; a project with notes in it is
- * never touched. Nothing is written to Flash until SAVE. */
+ * 6210 sees one it loads song 1. A project with notes in it is never touched. */
 static void dp_setup_once(void)
 {
     if (dp_setup_checked || boot_active) return;
@@ -121,51 +217,87 @@ static void dp_setup_once(void)
         groove_get_view(t, 0, &v);
         if (v.active_steps) return;
     }
-    if (!dp_kit_load()) {
-        track = 0; drum = 0; cursor = 0;
-        selected_note = groove_pad_note(0, 0);
-        notice = "6210 KIT READY"; notice_until = fm1_millis() + 2500U;
+    if (!dp_song_load(0)) {
+        preset_loaded = 1; preset_current_bank = 1; preset_current_slot = 0;
+        notice = "SONG 1 LOADED"; notice_until = fm1_millis() + 2500U;
     }
 }
 
-/* ---- Controls ------------------------------------------------------------ */
-/* Runs early in apply_controls so EDIT/PLAY/SAVE are not taken by other
- * gestures. Returns 1 when the event was consumed. */
-static int dp_edit_gesture(const struct fm1_controls *c, uint32_t pressed, uint32_t now,
-                           unsigned *play_handled)
+/* ---- Project menu (SAVE) --------------------------------------------------- */
+static void dp_menu_open(void)
 {
-    if (page != DRUM) { dp_edit_down = 0; return 0; }
-    if (!dp_edit_down) {
-        if (!(pressed & BUTTON(EDIT)) || (c->buttons & ~BUTTON(EDIT))) return 0;
-        dp_edit_down = 1;
-        dp_edit_used = 0;
-        return 1;
-    }
-    if (pressed & BUTTON(SAVE)) {
-        dp_edit_used = 1;
-        if (!release_keys()) return 1;
-        groove_edit_checkpoint(0);
-        int r = dp_kit_load();
-        track = 0; drum = 0; cursor = 0; step_follow = 1;
-        selected_note = groove_pad_note(0, 0);
-        dp_note("6210 KIT", r ? "FAILED" : "LOADED", now);
-        return 1;
-    }
-    if (pressed & BUTTON(PLAY)) { *play_handled = 1; dp_edit_used = 1; return 1; }
-    if (!(c->buttons & BUTTON(EDIT))) {
-        dp_edit_down = 0;
-        if (dp_edit_used) return 1;
-        /* A short tap keeps the original EDIT meaning: open the sound editor. */
-        unsigned edit = groove_source_type(track) == GROOVE_DX7 ? FM_QUICK : TONE_EDIT;
-        page = edit;
-        advanced_edit = 0;
-        if (page == TONE_EDIT) tone_pages[track][tone_slot()] = 0;
-        if (page == TONE_EDIT && groove_pad_count(track)) drum_parts[track] = (uint8_t)drum;
-        return 1;
-    }
-    if (encoder_active(c->encoders) && !c->encoders[6]) dp_edit_used = 1;
-    return 1;
+    dp_item = dp_confirm = 0;
+    page = FILES;
 }
+/* HOME (cancel) is handled by the panel buttons. */
+static void dp_menu_controls(const struct fm1_controls *c, uint32_t pressed, uint32_t key_down, uint32_t now)
+{
+    blocked_keys |= key_down; /* A menu key must not also write a step on the next page. */
+    int move = c->encoders[0] + c->encoders[2] + c->encoders[6];
+    unsigned ok = (pressed & BUTTON(SAVE)) != 0, no = 0;
+    for (unsigned i = 0; i < 3; ++i)
+        if (key_down & (1U << white_keys[i])) {
+            if (dp_confirm) { ok = i == 0; no = i == 1; }
+            else { dp_item = i; ok = 1; }
+        }
+    if (dp_confirm) {
+        if (no || move) { dp_confirm = 0; return; }
+        if (!ok) return;
+        if (!release_keys()) return;
+        groove_edit_checkpoint(0);
+        dp_new(130, 0, "NEW PROJECT");
+        page = music_page = DRUM;
+        notice = "NEW PROJECT"; notice_until = now + 2000U;
+        return;
+    }
+    if (move) dp_item = (unsigned)clamp((int)dp_item + move, 0, 2);
+    if (!ok) return;
+    if (dp_item == 0) {
+        project_return = DRUM; page = PROJECT; project_result = 0;
+        project_reload = project_operation = 0;
+        project_slot = groove_project_slot(); project_factory = name_cursor = 0;
+        project_refresh();
+    } else if (dp_item == 1) {
+        preset_bank = 0; preset_slot = groove_project_slot();
+        project_result = 0; preset_refresh(); page = PRESET_BROWSER;
+    } else dp_confirm = 1;
+}
+static void dp_menu_draw(void)
+{
+    char name[13];
+    groove_project_name(name);
+    uint32_t sig = signature(dp_item | (dp_confirm << 2), name, 12);
+    if (cache->hlv[0] == sig) return;
+    cache->hlv[0] = sig;
+    paint_fill(0, 0, 240, 240, BACK);
+    text(6, 8, "PROJECT", 2, TEXT, BACK);
+    text(6, 32, name, 1, DIM, BACK);
+    paint_fill(0, 44, 240, 2, TEXT);
+    if (dp_confirm) {
+        paint_fill(10, 60, 220, 70, TEXT);
+        text(22, 72, "CLEAR THE CURRENT", 1, BACK, TEXT);
+        text(22, 86, "PROJECT?", 2, BACK, TEXT);
+        text(22, 110, "SAVED SLOTS STAY", 1, BACK, TEXT);
+        frame(10, 144, 104, 40, TEXT); frame(126, 144, 104, 40, TEXT);
+        paint_fill(13, 147, 98, 34, TEXT);
+        text(38, 156, "YES", 2, BACK, TEXT);
+        text(164, 156, "NO", 2, TEXT, BACK);
+        text(6, 210, "KEY 1 / SAVE = YES", 1, DIM, BACK);
+        text(6, 224, "KEY 2 / HOME = NO", 1, DIM, BACK);
+        return;
+    }
+    static const char *const items[3] = {"SAVE PROJECT", "LOAD PROJECT", "NEW PROJECT"};
+    for (unsigned i = 0; i < 3; ++i) {
+        unsigned y = 58 + i * 46, on = i == dp_item;
+        paint_fill(6, y, 228, 38, on ? TEXT : PANEL);
+        number(14, y + 12, (int)i + 1, 1, 2, on ? BACK : DIM, on ? TEXT : PANEL);
+        text(40, y + 12, items[i], 2, on ? BACK : TEXT, on ? TEXT : PANEL);
+    }
+    text(6, 210, "SELECT / KEYS 1-3", 1, DIM, BACK);
+    text(6, 224, "SAVE = OPEN  HOME = BACK", 1, DIM, BACK);
+}
+
+/* ---- Controls -------------------------------------------------------------- */
 static unsigned dp_tune_parameter(unsigned t, unsigned part)
 {
     unsigned count = groove_tone_count(t, part);
@@ -280,24 +412,6 @@ static unsigned dp_phase(const struct groove_view *v)
 }
 
 /* ---- Drawing (240 x 240) -------------------------------------------------- */
-static unsigned dp_box_active(void)
-{
-    return dp_edit_down || (dp_note_at && frame_time - dp_note_at < 1200U);
-}
-static void dp_draw_box(void)
-{
-    if (paint_rendering && (paint_top >= 176 || paint_top + PAINT_ROWS <= 48)) return;
-    unsigned active = dp_box_active();
-    uint32_t sig = active | (dp_edit_down << 1) | ((uintptr_t)dp_note_mid << 2);
-    if (sig == cache->hlv[DP_C_BOX]) return;
-    cache->hlv[DP_C_BOX] = sig;
-    if (!active) return; /* Rows repaint themselves when the box closes. */
-    paint_fill(20, 68, 200, 84, TEXT);
-    frame(23, 71, 194, 78, BACK);
-    text(36, 84, dp_edit_down ? "EDIT HELD" : dp_note_top, 1, BACK, TEXT);
-    text(36, 100, dp_edit_down ? "SAVE" : dp_note_mid, 3, BACK, TEXT);
-    if (dp_edit_down) text(36, 130, "LOADS THE 6210 KIT", 1, BACK, TEXT);
-}
 /* One row per drum, or a single NOTE row for a melodic track. */
 static void dp_draw_rows(const struct groove_view *sel, unsigned first, unsigned box, unsigned phase)
 {
@@ -341,7 +455,7 @@ static void dp_draw_rows(const struct groove_view *sel, unsigned first, unsigned
 static void dp_draw(const struct groove_view v[8])
 {
     const struct groove_view *sel = &v[track];
-    unsigned pads = dp_pads(), box = dp_box_active();
+    unsigned pads = dp_pads(), box = 0;
     unsigned phase = dp_phase(sel), first = step_first(sel);
     unsigned beat = sel->playing && (sel->play_step & 3U) == 0 && phase < 160U;
     unsigned length = sel->sequence_length ? sel->sequence_length : 16U;
@@ -355,7 +469,7 @@ static void dp_draw(const struct groove_view v[8])
             text(6, 8, "T", 2, TEXT, BACK);
             number(18, 8, (int)track + 1, 1, 2, TEXT, BACK);
             paint_fill(34, 6, 38, 18, sel->muted ? DIM : TEXT);
-            text(36, 8, dp_source_short(sel->type), 2, BACK, sel->muted ? DIM : TEXT);
+            text(36, 8, pads ? dp_kit_name(track) : dp_source_short(sel->type), 2, BACK, sel->muted ? DIM : TEXT);
             number(84, 8, sel->tempo, 3, 2, TEXT, BACK);
             text(122, 15, groove_project_dirty() ? "BPM *" : "BPM  ", 1, DIM, BACK);
             text(170, 8, "6210", 1, DIM, BACK);
@@ -371,7 +485,7 @@ static void dp_draw(const struct groove_view v[8])
         if (sig != cache->hlv[DP_C_TITLE]) {
             cache->hlv[DP_C_TITLE] = sig;
             paint_fill(0, 30, 240, 16, BACK);
-            text(4, 34, pads ? groove_pad_name(track, drum) : sel->type == GROOVE_303 ? "ACID 303" : "STEPS", 1, TEXT, BACK);
+            text(4, 34, pads ? groove_pad_name(track, drum) : "STEPS", 1, TEXT, BACK);
             number(118, 34, (int)cursor + 1, 2, 1, DIM, BACK);
             for (unsigned p = 0; p < 4; ++p) {
                 unsigned x = 156 + p * 20;
@@ -382,7 +496,6 @@ static void dp_draw(const struct groove_view v[8])
         }
     }
     dp_draw_rows(sel, first, box, phase);
-    dp_draw_box();
     /* K1..K4. */
     char value[12];
     struct groove_view cell = {0};
@@ -403,7 +516,7 @@ static void dp_draw(const struct groove_view v[8])
     else decimal(value, values[pads ? dp_tune_parameter(track, drum) : 0], 1);
     knob(3, pads ? "K4 TUNE" : dx7 ? "K4 VOLUME" : "K4 CUTOFF", value, TEXT);
     if (!(paint_rendering && paint_top + PAINT_ROWS <= 229)) {
-        const char *hint = notice ? notice : pads ? "WHITE STEPS  BLACK DRUMS  OCT PAGE" : "WHITE STEPS  BLACK NOTES  OCT PAGE";
+        const char *hint = notice ? notice : "WHITE STEPS  BLACK DRUMS  SAVE MENU";
         uint32_t sig = signature(0, hint, (unsigned)strlen(hint));
         if (sig != cache->hlv[DP_C_HINT]) {
             cache->hlv[DP_C_HINT] = sig;
