@@ -34,7 +34,7 @@ int sim_select(unsigned track, unsigned source);
 unsigned groove_track_role(unsigned track);
 
 static unsigned elapsed;
-unsigned long sim_pixels_sent;
+extern unsigned long sim_pixels_sent;
 static void run(unsigned ms)
 {
     /* One render block is 128 frames at 44.1 kHz, about 2.9 ms. */

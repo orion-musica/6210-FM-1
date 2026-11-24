@@ -84,6 +84,8 @@ int fm1_screen_blit(unsigned x, unsigned y, unsigned w, unsigned h,
     if (w) screen_changed(y, h);
     return 0;
 }
+/* LCD pixels sent, for the host test's traffic check. */
+unsigned long sim_pixels_sent;
 /* Browser pixel copies complete immediately. */
 int fm1_screen_pending(void) { return 0; }
 int fm1_screen_submit(unsigned x, unsigned y, unsigned w, unsigned h,
@@ -91,9 +93,7 @@ int fm1_screen_submit(unsigned x, unsigned y, unsigned w, unsigned h,
 {
     if (!w || !h || w > 240U || h > 240U || w * h > FM1_SCREEN_DMA_PIXELS) return -1;
     int result = fm1_screen_blit(x, y, w, h, source, count);
-#ifdef FM1_HOST_TEST
-    { extern unsigned long sim_pixels_sent; if (!result) { sim_pixels_sent += w * h; } }
-#endif
+    if (!result) sim_pixels_sent += w * h;
     if (!result)
         for (unsigned i = 0; i < w * h; ++i)
             source[i] = (uint16_t)((source[i] << 8) | (source[i] >> 8));
