@@ -18,6 +18,7 @@
  *   shot NAME            write NAME.rgb565 (240x240) and NAME.leds (41 chars)
  *   expect-led N 0|1     fail unless LED N is in that state
  *   tracks               print type, mute, solo and step count of each track
+ *   pixels MAX           print LCD pixels sent since the last count; fail above MAX
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,6 +34,7 @@ int sim_select(unsigned track, unsigned source);
 unsigned groove_track_role(unsigned track);
 
 static unsigned elapsed;
+unsigned long sim_pixels_sent;
 static void run(unsigned ms)
 {
     /* One render block is 128 frames at 44.1 kHz, about 2.9 ms. */
@@ -83,7 +85,11 @@ int main(void)
             if (sim_select((unsigned)a, (unsigned)b)) { fprintf(stderr, "line %u: source failed\n", number); ++failures; }
             run(100);
         } else if (!strcmp(word, "shot") && sscanf(line, "%*s %199s", name) == 1) save(name);
-        else if (!strcmp(word, "expect-led") && sscanf(line, "%*s %d %d", &a, &b) == 2) {
+        else if (!strcmp(word, "pixels") && sscanf(line, "%*s %d", &a) == 1) {
+            printf("pixels: %lu sent\n", sim_pixels_sent);
+            if (sim_pixels_sent > (unsigned long)a) { printf("line %u: more than %d pixels\n", number, a); ++failures; }
+            sim_pixels_sent = 0;
+        } else if (!strcmp(word, "expect-led") && sscanf(line, "%*s %d %d", &a, &b) == 2) {
             const uint8_t *state = sim_state();
             if ((state[168 + a] != 0) != (b != 0)) {
                 fprintf(stderr, "line %u: LED %d is %d, expected %d\n", number, a, state[168 + a] != 0, b);

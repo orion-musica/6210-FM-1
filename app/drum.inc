@@ -458,7 +458,15 @@ static unsigned dp_phase(const struct groove_view *v)
 }
 
 /* ---- Drawing (240 x 240) -------------------------------------------------- */
-/* One row per drum, or a single NOTE row for a melodic track. */
+/* Mark one 10 px grid cell; the playhead column goes to the LCD in one piece. */
+static void dp_cell_mark(unsigned i, unsigned y, unsigned h)
+{
+    if (i >= 16U) return;
+    paint_mark(36 + i * 12 + (i / 4) * 2, y, 10, h);
+    for (unsigned b = y / PAINT_ROWS; b <= (y + h - 1) / PAINT_ROWS; ++b) paint_atomic |= 1U << b;
+}
+/* One row per drum, or a single NOTE row for a melodic track. A step change
+ * repaints only the old and new playhead cells, not whole rows. */
 static void dp_draw_rows(const struct groove_view *sel, unsigned first, unsigned box, unsigned phase)
 {
     unsigned pads = dp_pads(), rows = pads ? pads : 1U, rh = pads > 8 ? 11U : pads ? 15U : 60U;
@@ -476,12 +484,23 @@ static void dp_draw_rows(const struct groove_view *sel, unsigned first, unsigned
         if (paint_rendering && (y >= paint_top + PAINT_ROWS || y + rh <= paint_top)) continue;
         uint64_t lane = pads ? groove_drum_steps(track, r) : sel->active_steps;
         uint32_t bits = (uint32_t)((lane >> first) & 0xffffU);
-        unsigned hit = head < 16U && ((bits >> head) & 1U) && phase < 110U && !sel->muted;
-        uint32_t meta = head | ((r == drum) << 5) | (hit << 6) | (box << 7) | ((first / 16U) << 8) |
+        /* The label flash starts one frame after the column moves: its own small update. */
+        unsigned hit = head < 16U && ((bits >> head) & 1U) && phase < 110U && !sel->muted &&
+            frame_time != dp_step_at;
+        uint32_t meta = ((r == drum) << 5) | (box << 7) | ((first / 16U) << 8) |
             ((length / 16U) << 11) | ((cursor - first < 16U ? cursor - first : 31U) << 14) | (rows << 19);
         uint32_t sig = signature(meta, &bits, sizeof bits);
-        if (sig == cache->hlv[DP_C_ROW + r]) continue;
+        unsigned state = head | (hit << 5);
+        if (sig == cache->hlv[DP_C_ROW + r]) {
+            unsigned old = cache->dp_state[r];
+            if (old == state) continue;
+            cache->dp_state[r] = (uint8_t)state;
+            if ((old & 31U) != head) { dp_cell_mark(old & 31U, y, rh - 2); dp_cell_mark(head, y, rh - 2); }
+            if ((old ^ state) & 32U) paint_mark(2, y, 30, rh - 2);
+            continue;
+        }
         cache->hlv[DP_C_ROW + r] = sig;
+        cache->dp_state[r] = (uint8_t)state;
         paint_fill(0, y, 240, rh, BACK);
         /* Label: inverted for the selected drum, flashes on every hit. */
         unsigned lit = (r == drum) ^ hit;
@@ -507,8 +526,11 @@ static void dp_draw(const struct groove_view v[8])
     unsigned length = sel->sequence_length ? sel->sequence_length : 16U;
     /* Header: track, engine chip, tempo, unsaved mark, beat square. */
     if (!(paint_rendering && paint_top >= 30)) {
-        uint32_t sig = track | (sel->type << 3) | ((uint32_t)sel->tempo << 6) | ((uint32_t)beat << 16) |
+        uint32_t sig = track | (sel->type << 3) | ((uint32_t)sel->tempo << 6) |
             ((uint32_t)groove_project_dirty() << 17) | ((uint32_t)sel->muted << 18);
+        /* The beat square alone changes on every beat: send just that square. */
+        if (sig == cache->hlv[DP_C_HEAD] && cache->dp_state[11] != beat) paint_fill(223, 9, 10, 10, beat ? TEXT : BACK);
+        cache->dp_state[11] = (uint8_t)beat;
         if (sig != cache->hlv[DP_C_HEAD]) {
             cache->hlv[DP_C_HEAD] = sig;
             paint_fill(0, 0, 240, 27, BACK);

@@ -37,6 +37,9 @@ static uint16_t paint_pixels[FM1_SCREEN_WIDTH * PAINT_ROWS];
 static uint8_t paint_left[PAINT_BANDS], paint_right[PAINT_BANDS];
 static unsigned paint_rendering, paint_top, paint_next, paint_x, paint_end;
 static uint32_t paint_priority;
+/* Bands that must reach the LCD together (the DRUM playhead), so a moving
+ * column is never shown half at the old step and half at the new one. */
+static uint32_t paint_atomic;
 static struct fm1_ble_status frame_ble;
 static struct fm1_bluetooth_status frame_radio;
 static unsigned frame_radio_flags, frame_radio_role;
@@ -261,6 +264,7 @@ struct draw_cache {
     uint32_t foot_cache[4], row_cache[8], middle_shape, cell_cache[8][16], tile_cache[16];
     unsigned meter_cache[8];
     uint32_t hlv[16]; /* 6210 DRUM page, see drum.inc */
+    uint8_t dp_state[12]; /* DRUM rows: playhead step and hit flash; [11] beat square */
 };
 static struct draw_cache saved_cache, band_cache, *cache = &saved_cache;
 static uint32_t led_cache;
@@ -1569,13 +1573,20 @@ static void paint_flush(void)
     uint32_t started = fm1_millis();
     paint_rendering = 1;
     cache = &band_cache;
-    for (unsigned visited = 0; visited < PAINT_BANDS; ++visited) {
+    for (unsigned visited = 0, spins = 0; visited < PAINT_BANDS; ++visited) {
         int pending = fm1_screen_pending();
         if (pending) {
-            if (pending < 0) saved_cache.shown_page = ~0U;
+            if (pending < 0) { saved_cache.shown_page = ~0U; paint_atomic = 0; break; }
+            /* A playhead column is small: wait for the DMA rather than show half of it. */
+            if (paint_atomic && fm1_millis() - started < 8U && ++spins < 400000U) { --visited; continue; }
             break;
         }
         unsigned band = paint_next;
+        if (paint_atomic)
+            for (unsigned i = 0; i < PAINT_BANDS; ++i) {
+                unsigned candidate = (paint_next + i) % PAINT_BANDS;
+                if (paint_atomic & (1U << candidate)) { band = candidate; goto chosen; }
+            }
         /* Fresh knob/key feedback goes ahead of the rest of a page repaint.
          * Rotate within that set so continuous motion cannot starve its text. */
         if (paint_priority)
@@ -1583,9 +1594,10 @@ static void paint_flush(void)
                 unsigned candidate = (paint_next + i) % PAINT_BANDS;
                 if (paint_priority & (1U << candidate)) { band = candidate; break; }
             }
+    chosen:
         paint_next = (band + 1U) % PAINT_BANDS;
         unsigned left = paint_left[band], width = paint_right[band] - left;
-        if (left >= paint_right[band]) continue;
+        if (left >= paint_right[band]) { paint_atomic &= ~(1U << band); continue; }
         paint_top = band * PAINT_ROWS;
         paint_x = left;
         paint_end = left + width;
@@ -1595,14 +1607,16 @@ static void paint_flush(void)
         if (fm1_screen_submit(left, paint_top, width, PAINT_ROWS,
                             paint_pixels, width * PAINT_ROWS)) {
             saved_cache.shown_page = ~0U; /* Retry the whole page after a transport error. */
+            paint_atomic = 0;
             break;
         }
         paint_left[band] = FM1_SCREEN_WIDTH;
         paint_right[band] = 0;
         paint_priority &= ~(1U << band);
+        paint_atomic &= ~(1U << band);
         /* The DMA borrows paint_pixels. The next iteration/poll must observe
          * completion before composing another band into that same buffer. */
-        if (fm1_millis() - started >= 4U) break;
+        if (fm1_millis() - started >= (paint_atomic ? 8U : 4U)) break;
     }
     paint_rendering = 0;
     cache = &saved_cache;
@@ -1721,7 +1735,7 @@ void groove_screen_init(void)
     operator_held = operator_long = 0;
     memset(paint_left, FM1_SCREEN_WIDTH, sizeof paint_left);
     memset(paint_right, 0, sizeof paint_right);
-    paint_next = paint_rendering = paint_priority = 0;
+    paint_next = paint_rendering = paint_priority = paint_atomic = 0;
     memset(encoder_direction, 0, sizeof encoder_direction);
     memset(encoder_speed, 0, sizeof encoder_speed);
     fm1_controls_init();

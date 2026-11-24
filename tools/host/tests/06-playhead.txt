@@ -1,0 +1,15 @@
+# The DRUM playhead: a step change sends only the old and new cells, not whole rows.
+boot
+tap 12
+wait 600
+pixels 999999
+wait 905
+pixels 40000
+shot play-a
+wait 37
+shot play-b
+wait 41
+shot play-c
+tap 12
+wait 300
+shot stopped
