@@ -1,0 +1,116 @@
+# 6210 Drum Peter: test, build the firmware and the installer site in the cloud.
+# Runs on every push to main, on version tags (v*), or by hand:
+# Actions > build > Run workflow.
+# Result: the "6210" download (firmware, installer, checksum). On a public
+# repository with Pages set to "GitHub Actions", also the live site.
+# A tag such as v0.1.0-beta also publishes a GitHub Release with the firmware.
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  host-test:
+    # Compiles the real screen code with the browser engine on Linux and plays
+    # the panel scripts in tools/host/tests. Screenshots are kept as an artifact.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pillow for screenshots
+        run: python3 -m pip install --quiet pillow
+      - name: Host test
+        run: sh tools/host/build.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: host-test-screens
+          path: build/host/**/*.png
+          if-no-files-found: ignore
+
+  build:
+    needs: host-test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JieLi Windows toolchain 2.5.3
+        shell: pwsh
+        timeout-minutes: 40
+        run: ./tools/ci/Install-JieLi.ps1
+
+      - name: Build 6210 (firmware + installer + site)
+        shell: pwsh
+        timeout-minutes: 30
+        run: |
+          $env:FM1_SOURCE_URL = "https://github.com/${{ github.repository }}/archive/${{ github.sha }}.zip"
+          ./tools/Make-Site.ps1
+
+      - name: Size report (only when the build fails)
+        if: failure()
+        shell: pwsh
+        run: |
+          $nm = Join-Path $env:FM1_PI32_TOOLCHAIN 'bin\llvm-nm.exe'
+          $elf = 'build\dx7\sdk.elf'
+          if (!(Test-Path $elf)) { Write-Host 'No ELF to inspect.'; exit 0 }
+          $all = & $nm --print-size --size-sort --radix=d $elf
+          Write-Host '--- 100 largest symbols ---'
+          $all | Select-Object -Last 100 | ForEach-Object { Write-Host $_ }
+          Write-Host '--- 6210 / screen symbols ---'
+          $all | Select-String 'dp_|boot_draw|screen|paint|draw|text|glyph|font|leds' | Select-Object -Last 80 | ForEach-Object { Write-Host $_ }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: '6210'
+          path: |
+            docs/downloads/
+            docs/install/flasher.html
+          if-no-files-found: error
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  pages:
+    needs: build
+    if: github.event.repository.private == false && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: '6210'
+          path: dist
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          pre=""
+          case "$tag" in *-*) pre="--prerelease" ;; esac
+          gh release create "$tag" --repo "$GITHUB_REPOSITORY" $pre \
+            --title "6210 Drum Peter $tag" \
+            --notes-file <(printf '%s\n\n%s\n' \
+              "Firmware for the M-VAVE FM-1. Install it with the web installer (Chrome or Edge) or with the M-VAVE workbench." \
+              "SHA-256: $(cut -d' ' -f1 dist/downloads/SHA256SUMS.txt)") \
+            dist/downloads/6210.fwsc dist/downloads/SHA256SUMS.txt dist/downloads/6210_README.md

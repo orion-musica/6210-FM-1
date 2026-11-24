@@ -1,0 +1,3 @@
+# Start screen with the 6210 branding.
+startup 700
+shot boot

@@ -1,0 +1,13 @@
+# 6210: boot an empty device; the DRUM page should load the 6210 kit.
+boot
+wait 600
+shot drum-kit
+expect-led 11 1
+# Play: the playhead runs over the steps; PLAY blinks on the beat.
+tap 12
+wait 30
+shot playing-a
+wait 170
+shot playing-b
+# Mute track 1 from the mixer: GLO double-flashes on bar starts.
+tap 12
