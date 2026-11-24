@@ -21,7 +21,7 @@
  */
 #include "drum808.h"
 
-enum { DP_C_HEAD, DP_C_TITLE, DP_C_ROW, DP_C_INFO = DP_C_ROW + 11, DP_C_BOX, DP_C_HINT, DP_C_COUNT };
+enum { DP_C_HEAD, DP_C_TITLE, DP_C_ROW, DP_C_BOX = DP_C_ROW + 11, DP_C_HINT, DP_C_REST, DP_C_COUNT };
 _Static_assert(DP_C_COUNT <= 16, "DRUM page cache slots");
 
 static unsigned dp_edit_used;
@@ -42,7 +42,7 @@ static void dp_init(void)
 static void dp_note(const char *top, const char *mid, uint32_t now)
 {
     dp_note_top = top; dp_note_mid = mid;
-    dp_note_at = now ? now : 1U;
+    dp_note_at = now | 1U;
 }
 static unsigned dp_pads(void) { return groove_pad_count(track); }
 static const char *dp_source_short(unsigned type)
@@ -76,45 +76,37 @@ static void dp_tone_set(unsigned t, unsigned part, const char *name, unsigned va
         return;
     }
 }
-static void dp_drum_line(unsigned t, unsigned pad, const char *pattern, unsigned velocity)
-{
-    for (unsigned s = 0; s < 16 && pattern[s]; ++s)
-        if (pattern[s] != '.')
-            groove_sequence_edit(t, s, groove_pad_note(t, pad), pattern[s] == 'X' ? 127U : velocity);
-}
-/* T1 DRUM 808, T2 DRUM 808 voiced like a 909 (shorter, brighter, harder),
- * T3 BASS 303 with a short acid line. Tracks 4..8 are left as they are. */
+/* 909 voicing for T2: the same 808 engine set tighter, brighter and harder.
+ * Each entry: part, parameter name, value. */
+static const struct { uint8_t part; char name[7]; uint8_t value; } dp_909[] = {
+    {D8_BD, "Decay", 46}, {D8_BD, "Tune", 84}, {D8_BD, "Attack", 96}, {D8_BD, "Tone", 74}, {D8_BD, "Drive", 28},
+    {D8_SD, "Tone", 96}, {D8_SD, "Snappy", 112}, {D8_SD, "Tune", 82}, {D8_SD, "Decay", 74},
+    {D8_CP, "Decay", 52}, {D8_CP, "Tune", 74}, {D8_CH, "Decay", 30}, {D8_CH, "Tune", 92},
+    {D8_OH, "Decay", 58}, {D8_OH, "Tune", 92}, {D8_CY, "Tune", 84}, {D8_RS, "Decay", 30}, {D8_RS, "Tune", 80}};
+/* Starter groove, one bit per step (bit 0 = step 1): track, pad, steps, accents. */
+static const struct { uint8_t track, pad; uint16_t steps, accents; } dp_groove[] = {
+    {0, D8_BD, 0x1111, 0x0101}, {0, D8_CH, 0x4444, 0}, {0, D8_RS, 0x4080, 0},
+    {1, D8_CP, 0x1010, 0x1010}, {1, D8_OH, 0x4444, 0}, {1, D8_CH, 0x0101, 0}};
+/* T1 DRUM 808, T2 DRUM 808 voiced like a 909, T3 BASS 303 with a short
+ * acid line. Tracks 4..8 are left as they are. */
 static int dp_kit_load(void)
 {
-    if (groove_source_type(0) != GROOVE_808 && groove_source_set(0, GROOVE_808)) return -1;
-    if (groove_source_type(1) != GROOVE_808 && groove_source_set(1, GROOVE_808)) return -1;
-    if (groove_source_type(2) != GROOVE_303 && groove_source_set(2, GROOVE_303)) return -1;
+    static const uint8_t engines[3] = {GROOVE_808, GROOVE_808, GROOVE_303};
+    static const uint8_t acid[16] = {36, 0, 36, 48, 0, 39, 36, 0, 43, 0, 36, 46, 0, 39, 41, 0};
     for (unsigned t = 0; t < 3; ++t) {
+        if (groove_source_type(t) != engines[t] && groove_source_set(t, engines[t])) return -1;
         groove_edit_clear(t, 0, 2);
         groove_sequence_length_set(t, 16);
     }
-    /* 909 voicing on T2: the same engine, set tighter and brighter. */
-    dp_tone_set(1, D8_BD, "Decay", 46); dp_tone_set(1, D8_BD, "Tune", 84);
-    dp_tone_set(1, D8_BD, "Attack", 96); dp_tone_set(1, D8_BD, "Tone", 74);
-    dp_tone_set(1, D8_BD, "Drive", 28);
-    dp_tone_set(1, D8_SD, "Tone", 96); dp_tone_set(1, D8_SD, "Snappy", 112);
-    dp_tone_set(1, D8_SD, "Tune", 82); dp_tone_set(1, D8_SD, "Decay", 74);
-    dp_tone_set(1, D8_CP, "Decay", 52); dp_tone_set(1, D8_CP, "Tune", 74);
-    dp_tone_set(1, D8_CH, "Decay", 30); dp_tone_set(1, D8_CH, "Tune", 92);
-    dp_tone_set(1, D8_OH, "Decay", 58); dp_tone_set(1, D8_OH, "Tune", 92);
-    dp_tone_set(1, D8_CY, "Tune", 84);
-    dp_tone_set(1, D8_RS, "Decay", 30); dp_tone_set(1, D8_RS, "Tune", 80);
-    /* Starter groove: 808 kick and hats, 909 clap and open hats, acid bass. */
-    dp_drum_line(0, D8_BD, "X...x...X...x...", 100);
-    dp_drum_line(0, D8_CH, "..x...x...x...x.", 90);
-    dp_drum_line(0, D8_RS, ".......x......x.", 80);
-    dp_drum_line(1, D8_CP, "....X.......X...", 100);
-    dp_drum_line(1, D8_OH, "..x...x...x...x.", 90);
-    dp_drum_line(1, D8_CH, "x.......x.......", 70);
-    static const int8_t acid[16] = {36, -1, 36, 48, -1, 39, 36, -1, 43, -1, 36, 46, -1, 39, 41, -1};
-    static const uint8_t accent[16] = {1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0};
+    for (unsigned i = 0; i < sizeof dp_909 / sizeof dp_909[0]; ++i)
+        dp_tone_set(1, dp_909[i].part, dp_909[i].name, dp_909[i].value);
+    for (unsigned i = 0; i < sizeof dp_groove / sizeof dp_groove[0]; ++i)
+        for (unsigned s = 0; s < 16; ++s)
+            if ((dp_groove[i].steps >> s) & 1U)
+                groove_sequence_edit(dp_groove[i].track, s, groove_pad_note(dp_groove[i].track, dp_groove[i].pad),
+                                     (dp_groove[i].accents >> s) & 1U ? 127U : 96U);
     for (unsigned s = 0; s < 16; ++s)
-        if (acid[s] >= 0) groove_sequence_edit(2, s, (unsigned)acid[s], accent[s] ? 127U : 96U);
+        if (acid[s]) groove_sequence_edit(2, s, acid[s], s % 4 == 3 || s == 0 ? 127U : 96U);
     return 0;
 }
 /* A fresh start has an empty project (no notes on any track). The first time
@@ -290,104 +282,61 @@ static unsigned dp_phase(const struct groove_view *v)
 /* ---- Drawing (240 x 240) -------------------------------------------------- */
 static unsigned dp_box_active(void)
 {
-    if (dp_edit_down) return 1;
-    return dp_note_at && frame_time - dp_note_at < 1200U;
+    return dp_edit_down || (dp_note_at && frame_time - dp_note_at < 1200U);
 }
-static void dp_center(unsigned y, const char *s, unsigned scale, uint16_t fg, uint16_t bg)
-{
-    unsigned w = (unsigned)strlen(s) * 6U * scale;
-    text(w < 200 ? 20 + (200 - w) / 2 : 20, y, s, scale, fg, bg);
-}
-static unsigned dp_cell_x(unsigned i) { return 36 + i * 12 + (i / 4) * 2; }
 static void dp_draw_box(void)
 {
     if (paint_rendering && (paint_top >= 176 || paint_top + PAINT_ROWS <= 48)) return;
     unsigned active = dp_box_active();
-    uint32_t sig = active | (dp_edit_down << 1);
-    if (dp_note_mid) sig = signature(sig, dp_note_mid, (unsigned)strlen(dp_note_mid));
+    uint32_t sig = active | (dp_edit_down << 1) | ((uintptr_t)dp_note_mid << 2);
     if (sig == cache->hlv[DP_C_BOX]) return;
     cache->hlv[DP_C_BOX] = sig;
     if (!active) return; /* Rows repaint themselves when the box closes. */
-    paint_fill(20, 64, 200, 96, TEXT);
-    paint_fill(22, 66, 196, 92, BACK);
-    paint_fill(24, 68, 192, 88, TEXT);
-    if (dp_edit_down) {
-        dp_center(78, "EDIT HELD", 1, BACK, TEXT);
-        dp_center(96, "SAVE", 2, BACK, TEXT);
-        dp_center(116, "= LOAD 6210 KIT", 1, BACK, TEXT);
-        dp_center(136, "PRESETS = ENGINE", 1, BACK, TEXT);
-    } else {
-        dp_center(80, dp_note_top ? dp_note_top : "", 1, BACK, TEXT);
-        dp_center(100, dp_note_mid ? dp_note_mid : "", 3, BACK, TEXT);
-    }
+    paint_fill(20, 68, 200, 84, TEXT);
+    frame(23, 71, 194, 78, BACK);
+    text(36, 84, dp_edit_down ? "EDIT HELD" : dp_note_top, 1, BACK, TEXT);
+    text(36, 100, dp_edit_down ? "SAVE" : dp_note_mid, 3, BACK, TEXT);
+    if (dp_edit_down) text(36, 130, "LOADS THE 6210 KIT", 1, BACK, TEXT);
 }
-static void dp_draw_drums(const struct groove_view *sel, unsigned first, unsigned box, unsigned phase)
+/* One row per drum, or a single NOTE row for a melodic track. */
+static void dp_draw_rows(const struct groove_view *sel, unsigned first, unsigned box, unsigned phase)
 {
-    unsigned pads = dp_pads(), rh = pads > 8 ? 11U : 15U;
+    unsigned pads = dp_pads(), rows = pads ? pads : 1U, rh = pads > 8 ? 11U : pads ? 15U : 60U;
     unsigned length = sel->sequence_length ? sel->sequence_length : 16U;
-    unsigned head = sel->playing && (sel->play_step & ~15U) == first ? (sel->play_step & 15U) : 255U;
-    unsigned flash = phase < 110U;
-    for (unsigned r = 0; r < pads && r < 11; ++r) {
+    unsigned head = sel->playing && (sel->play_step & ~15U) == first ? (sel->play_step & 15U) : 16U;
+    /* Clear what a taller grid of another track left under this one. */
+    unsigned bottom = 48 + rows * rh;
+    if (!(paint_rendering && (paint_top >= 172 || paint_top + PAINT_ROWS <= bottom)) &&
+        cache->hlv[DP_C_REST] != (bottom | (box << 8))) {
+        cache->hlv[DP_C_REST] = bottom | (box << 8);
+        if (bottom < 172) paint_fill(0, bottom, 240, 172 - bottom, BACK);
+    }
+    for (unsigned r = 0; r < rows && r < 11; ++r) {
         unsigned y = 48 + r * rh;
         if (paint_rendering && (y >= paint_top + PAINT_ROWS || y + rh <= paint_top)) continue;
-        uint64_t lane = groove_drum_steps(track, r);
+        uint64_t lane = pads ? groove_drum_steps(track, r) : sel->active_steps;
         uint32_t bits = (uint32_t)((lane >> first) & 0xffffU);
-        unsigned hit = head != 255U && ((bits >> head) & 1U) && flash && !sel->muted;
-        uint32_t meta = (head & 31U) | ((r == drum) << 5) | (hit << 6) | (box << 7) | ((first / 16U) << 8) |
-            ((length / 16U) << 11) | ((cursor - first < 16U ? cursor - first : 31U) << 14) | (pads << 19);
+        unsigned hit = head < 16U && ((bits >> head) & 1U) && phase < 110U && !sel->muted;
+        uint32_t meta = head | ((r == drum) << 5) | (hit << 6) | (box << 7) | ((first / 16U) << 8) |
+            ((length / 16U) << 11) | ((cursor - first < 16U ? cursor - first : 31U) << 14) | (rows << 19);
         uint32_t sig = signature(meta, &bits, sizeof bits);
         if (sig == cache->hlv[DP_C_ROW + r]) continue;
         cache->hlv[DP_C_ROW + r] = sig;
         paint_fill(0, y, 240, rh, BACK);
-        /* Label: inverted for the selected drum, a short flash on every hit. */
-        uint16_t lb = r == drum || hit ? TEXT : BACK, lf = lb == TEXT ? BACK : TEXT;
-        if (r == drum && hit) { lb = DIM; lf = BACK; }
-        paint_fill(2, y, 30, rh - 2, lb);
-        text(4, y + (rh - 9) / 2, groove_pad_label(track, r), 1, lf, lb);
+        /* Label: inverted for the selected drum, flashes on every hit. */
+        unsigned lit = (r == drum) ^ hit;
+        paint_fill(2, y, 30, rh - 2, lit ? TEXT : BACK);
+        text(4, y + (rh - 9) / 2, pads ? groove_pad_label(track, r) : "NOTE", 1, lit ? BACK : TEXT, lit ? TEXT : BACK);
         for (unsigned i = 0; i < 16; ++i) {
-            unsigned x = dp_cell_x(i), s = first + i;
-            if (s >= length) { frame(x, y, 10, rh - 2, PANEL); continue; }
-            unsigned on = (bits >> i) & 1U;
-            if (i == head) {
+            unsigned x = 36 + i * 12 + (i / 4) * 2, on = (bits >> i) & 1U;
+            if (first + i >= length) frame(x, y, 10, rh - 2, PANEL);
+            else if (i == head) {
                 paint_fill(x, y, 10, rh - 2, TEXT);
                 paint_fill(x + 2, y + 2, 6, rh - 6, on ? DIM : BACK);
             } else paint_fill(x, y, 10, rh - 2, on ? TEXT : PANEL);
-            if (r == drum && s == cursor && !on && i != head) paint_fill(x + 3, y + (rh - 2) / 2 - 1, 4, 2, TEXT);
+            if (r == drum && first + i == cursor && i != head) paint_fill(x + 3, y + rh - 5, 4, 2, on ? BACK : TEXT);
         }
     }
-}
-static void dp_draw_notes(const struct groove_view *sel, unsigned first, unsigned box)
-{
-    if (paint_rendering && (paint_top >= 172 || paint_top + PAINT_ROWS <= 48)) return;
-    struct groove_step cells[16];
-    groove_sequence_read(track, first, cells, 16);
-    unsigned length = sel->sequence_length ? sel->sequence_length : 16U;
-    unsigned head = sel->playing && (sel->play_step & ~15U) == first ? (sel->play_step & 15U) : 255U;
-    unsigned low = 127, high = 0;
-    for (unsigned i = 0; i < 16; ++i)
-        if (cells[i].velocity) {
-            if (cells[i].note < low) low = cells[i].note;
-            if (cells[i].note > high) high = cells[i].note;
-        }
-    if (low > high) low = high = 60;
-    if (high - low < 12) { low = low > 6 ? low - 6 : 0; high = low + 12; }
-    uint32_t sig = signature((head & 31U) | (box << 5) | ((first / 16U) << 6) | ((length / 16U) << 9) |
-        ((cursor - first < 16U ? cursor - first : 31U) << 12), cells, sizeof cells);
-    if (sig == cache->hlv[DP_C_ROW]) return;
-    cache->hlv[DP_C_ROW] = sig;
-    paint_fill(0, 46, 240, 126, BACK);
-    for (unsigned i = 0; i < 16; ++i) {
-        unsigned x = dp_cell_x(i), s = first + i;
-        if (s >= length) { frame(x, 160, 10, 10, PANEL); continue; }
-        unsigned on = cells[i].velocity != 0;
-        unsigned h = on ? 14U + (cells[i].note - low) * 96U / (high - low) : 4U;
-        if (h > 110) h = 110;
-        paint_fill(x, 170 - h, 10, h, on ? (cells[i].velocity > 100 ? TEXT : DIM) : PANEL);
-        if (i == head) { paint_fill(x, 48, 10, 4, TEXT); frame(x, 170 - h, 10, h, TEXT); }
-        if (s == cursor) paint_fill(x, 56, 10, 2, DIM);
-    }
-    text(4, 50, "HI", 1, DIM, BACK);
-    text(4, 160, "LO", 1, DIM, BACK);
 }
 static void dp_draw(const struct groove_view v[8])
 {
@@ -395,11 +344,11 @@ static void dp_draw(const struct groove_view v[8])
     unsigned pads = dp_pads(), box = dp_box_active();
     unsigned phase = dp_phase(sel), first = step_first(sel);
     unsigned beat = sel->playing && (sel->play_step & 3U) == 0 && phase < 160U;
-    /* Header: track, engine chip, kit number, tempo, beat square. */
+    unsigned length = sel->sequence_length ? sel->sequence_length : 16U;
+    /* Header: track, engine chip, tempo, unsaved mark, beat square. */
     if (!(paint_rendering && paint_top >= 30)) {
-        uint32_t sig = track | (sel->type << 3) | ((uint32_t)sel->program << 6) | ((uint32_t)sel->tempo << 14) |
-            ((uint32_t)beat << 24) | ((uint32_t)groove_project_dirty() << 25) | ((uint32_t)sel->clock_mode << 26) |
-            ((uint32_t)sel->muted << 27);
+        uint32_t sig = track | (sel->type << 3) | ((uint32_t)sel->tempo << 6) | ((uint32_t)beat << 16) |
+            ((uint32_t)groove_project_dirty() << 17) | ((uint32_t)sel->muted << 18);
         if (sig != cache->hlv[DP_C_HEAD]) {
             cache->hlv[DP_C_HEAD] = sig;
             paint_fill(0, 0, 240, 27, BACK);
@@ -407,30 +356,23 @@ static void dp_draw(const struct groove_view v[8])
             number(18, 8, (int)track + 1, 1, 2, TEXT, BACK);
             paint_fill(34, 6, 38, 18, sel->muted ? DIM : TEXT);
             text(36, 8, dp_source_short(sel->type), 2, BACK, sel->muted ? DIM : TEXT);
-            text(78, 7, "KIT", 1, DIM, BACK);
-            number(78, 16, sel->program + 1, 3, 1, TEXT, BACK);
-            if (sel->clock_mode && !sel->tempo) text(108, 8, "EXT", 2, TEXT, BACK);
-            else number(108, 8, sel->tempo, 3, 2, TEXT, BACK);
-            text(146, 15, "BPM", 1, DIM, BACK);
-            text(170, 15, groove_project_dirty() ? "*" : " ", 1, TEXT, BACK);
-            text(180, 8, "6210", 1, DIM, BACK);
+            number(84, 8, sel->tempo, 3, 2, TEXT, BACK);
+            text(122, 15, groove_project_dirty() ? "BPM *" : "BPM  ", 1, DIM, BACK);
+            text(170, 8, "6210", 1, DIM, BACK);
             frame(220, 6, 16, 16, TEXT);
             paint_fill(223, 9, 10, 10, beat ? TEXT : BACK);
         }
     }
-    /* Title: what the grid shows and which 16 steps of how many. */
+    /* Title: drum or track name, cursor step and the four 16-step pages. */
     if (!(paint_rendering && (paint_top >= 46 || paint_top + PAINT_ROWS <= 30))) {
-        unsigned length = sel->sequence_length ? sel->sequence_length : 16U;
         unsigned playing_page = sel->playing ? sel->play_step / 16U : 7U;
         uint32_t sig = drum | (track << 4) | ((first / 16U) << 7) | ((length / 16U) << 10) |
-            (playing_page << 13) | ((uint32_t)sel->type << 17) | (step_follow << 20);
+            (playing_page << 13) | ((uint32_t)sel->type << 17) | (cursor << 20);
         if (sig != cache->hlv[DP_C_TITLE]) {
             cache->hlv[DP_C_TITLE] = sig;
             paint_fill(0, 30, 240, 16, BACK);
-            const char *name = pads ? groove_pad_name(track, drum)
-                : sel->type == GROOVE_303 ? "ACID 303" : sel->type == GROOVE_DX7 ? "DX7 STEPS"
-                : sel->type == GROOVE_PSG ? "PSG STEPS" : "PLUCK STEPS";
-            text(4, 34, name, 1, TEXT, BACK);
+            text(4, 34, pads ? groove_pad_name(track, drum) : sel->type == GROOVE_303 ? "ACID 303" : "STEPS", 1, TEXT, BACK);
+            number(118, 34, (int)cursor + 1, 2, 1, DIM, BACK);
             for (unsigned p = 0; p < 4; ++p) {
                 unsigned x = 156 + p * 20;
                 if (p * 16 >= length) { frame(x, 33, 16, 9, PANEL); continue; }
@@ -439,67 +381,29 @@ static void dp_draw(const struct groove_view v[8])
             }
         }
     }
-    if (pads) dp_draw_drums(sel, first, box, phase);
-    else dp_draw_notes(sel, first, box);
-    /* Cursor step details. */
-    if (!(paint_rendering && (paint_top >= 192 || paint_top + PAINT_ROWS <= 174))) {
-        unsigned velocity = groove_step_setting(track, cursor, 0), chance = groove_step_setting(track, cursor, 2);
-        struct groove_view cell = {0};
-        groove_get_view(track, cursor, &cell);
-        unsigned on = pads ? (cell.step.drums >> drum) & 1U : cell.step.velocity != 0;
-        uint32_t sig = cursor | (velocity << 6) | (chance << 14) | (on << 18) | ((uint32_t)cell.step.note << 19) | (box << 27);
-        if (sig != cache->hlv[DP_C_INFO]) {
-            cache->hlv[DP_C_INFO] = sig;
-            paint_fill(0, 174, 240, 18, BACK);
-            text(4, 178, "STEP", 1, DIM, BACK);
-            number(32, 178, (int)cursor + 1, 2, 1, TEXT, BACK);
-            char value[12];
-            if (!pads && on) { note_name(cell.step.note, value); text(52, 178, value, 1, TEXT, BACK); }
-            text(84, 178, on ? "ON " : "OFF", 1, on ? TEXT : DIM, BACK);
-            text(108, 178, "VEL", 1, DIM, BACK);
-            number(128, 178, (int)velocity, 3, 1, TEXT, BACK);
-            text(156, 178, velocity >= 120 ? "ACC" : "   ", 1, TEXT, BACK);
-            text(180, 178, "CH", 1, DIM, BACK);
-            decimal(value, chance ? (int)((chance * 100U + 4U) / 8U) : 100, 1);
-            strcat(value, "%");
-            text(196, 178, value, 1, TEXT, BACK);
-        }
-    }
+    dp_draw_rows(sel, first, box, phase);
     dp_draw_box();
     /* K1..K4. */
     char value[12];
-    if (pads) {
-        knob(0, "K1 DRUM", groove_pad_label(track, drum), TEXT);
-    } else {
-        struct groove_view cell = {0};
-        groove_get_view(track, cursor, &cell);
-        note_name(cell.step.velocity ? cell.step.note : selected_note, value);
-        knob(0, "K1 NOTE", value, TEXT);
-    }
+    struct groove_view cell = {0};
+    groove_get_view(track, cursor, &cell);
+    if (pads) strcpy(value, groove_pad_label(track, drum));
+    else note_name(cell.step.velocity ? cell.step.note : selected_note, value);
+    knob(0, pads ? "K1 DRUM" : "K1 NOTE", value, TEXT);
     decimal(value, (int)groove_step_setting(track, cursor, 0), 1);
     knob(1, "K2 VELO", value, TEXT);
     unsigned chance = groove_step_setting(track, cursor, 2);
     decimal(value, chance ? (int)((chance * 100U + 4U) / 8U) : 100, 1);
     strcat(value, "%");
     knob(2, "K3 CHANCE", value, TEXT);
-    if (pads) {
-        uint8_t values[GROOVE_TONE_PARAMS];
-        unsigned p = dp_tune_parameter(track, drum);
-        if (groove_tone_copy(track, drum, values) < 0) strcpy(value, "--");
-        else decimal(value, values[p], 1);
-        knob(3, "K4 TUNE", value, TEXT);
-    } else if (sel->type == GROOVE_DX7) {
-        decimal(value, sel->volume, 1);
-        knob(3, "K4 VOLUME", value, TEXT);
-    } else {
-        uint8_t values[GROOVE_TONE_PARAMS];
-        if (groove_tone_copy(track, 0, values) < 0) strcpy(value, "--");
-        else decimal(value, values[0], 1);
-        knob(3, "K4 CUTOFF", value, TEXT);
-    }
+    uint8_t values[GROOVE_TONE_PARAMS];
+    unsigned dx7 = !pads && sel->type == GROOVE_DX7;
+    if (dx7) decimal(value, sel->volume, 1);
+    else if (groove_tone_copy(track, pads ? drum : 0, values) < 0) strcpy(value, "--");
+    else decimal(value, values[pads ? dp_tune_parameter(track, drum) : 0], 1);
+    knob(3, pads ? "K4 TUNE" : dx7 ? "K4 VOLUME" : "K4 CUTOFF", value, TEXT);
     if (!(paint_rendering && paint_top + PAINT_ROWS <= 229)) {
-        const char *hint = notice ? notice : dp_edit_down ? "EDIT HELD"
-            : pads ? "WHITE=STEPS  BLACK=DRUMS  OCT=PAGE" : "WHITE=STEPS  BLACK=NOTES  OCT=PAGE";
+        const char *hint = notice ? notice : pads ? "WHITE STEPS  BLACK DRUMS  OCT PAGE" : "WHITE STEPS  BLACK NOTES  OCT PAGE";
         uint32_t sig = signature(0, hint, (unsigned)strlen(hint));
         if (sig != cache->hlv[DP_C_HINT]) {
             cache->hlv[DP_C_HINT] = sig;

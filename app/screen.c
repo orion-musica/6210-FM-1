@@ -1042,43 +1042,35 @@ static void leds(const struct groove_view *v, unsigned visible)
     uint32_t bits = 0;
     unsigned first = step_first(v), phase = dp_phase(v);
     unsigned slow = (frame_time / 500U) & 1U, fast = (frame_time / 62U) & 1U, two = (frame_time / 250U) & 1U;
-    unsigned bar_step = v->play_step & 15U;
-    unsigned dbl = v->playing ? bar_step == 0 && (phase < 70U || (phase >= 140U && phase < 210U))
-                              : (frame_time % 2000U) < 90U || ((frame_time % 2000U) >= 180U && (frame_time % 2000U) < 270U);
+    /* Double flash: two short pulses at the start of every bar (every 2 s when stopped). */
+    unsigned at = v->playing ? ((v->play_step & 15U) ? 999U : phase * 2U) : frame_time % 2000U;
+    unsigned dbl = at < 90U || (at >= 180U && at < 270U);
     unsigned step_pages = visible == STEPS || visible == ACTIONS || visible == DRUM;
+    unsigned pads = groove_pad_count(track);
     if ((visible == STEPS || visible == DRUM) && !writing) {
-        unsigned pads = groove_pad_count(track);
-        uint64_t lane = pads != 0 ? groove_drum_steps(track, drum) : v->active_steps;
-        unsigned length = v->sequence_length ? v->sequence_length : 16U;
+        uint64_t lane = pads ? groove_drum_steps(track, drum) : v->active_steps;
         for (unsigned i = 0; i < 16; ++i) {
-            unsigned s = first + i;
-            if (s >= length) continue;
-            unsigned on = (unsigned)((lane >> s) & 1U);
+            unsigned s = first + i, on = (unsigned)((lane >> s) & 1U);
             if (v->playing && s == v->play_step) on = on ? phase >= 100U : phase < 128U;
             else if (!v->playing && s == cursor && visible == DRUM) on = two;
-            if (on) bits |= 1U << white_keys[i];
+            if (s < v->sequence_length && on) bits |= 1U << white_keys[i];
         }
-        if (visible == DRUM && pads) {
-            for (unsigned d = 0; d < pads && d < 11; ++d) {
-                unsigned key = d < 10 ? edit_keys[d] : 25U;
-                unsigned hit = v->playing && !v->muted && phase < 90U &&
-                    ((groove_drum_steps(track, d) >> v->play_step) & 1U);
-                if (d == drum ? !hit || phase >= 45U : hit) bits |= 1U << key;
-            }
+        /* Black keys: the selected drum is lit; every drum hit flashes its key. */
+        for (unsigned d = 0; visible == DRUM && d < pads && d < 11; ++d) {
+            unsigned hit = v->playing && phase < 90U && ((groove_drum_steps(track, d) >> v->play_step) & 1U);
+            if ((d == drum) ^ hit) bits |= 1U << (d < 10 ? edit_keys[d] : 25U);
         }
-        for (unsigned key = 0; key < 27; ++key)
-            if (key_note[key] != 0xff) bits |= 1U << key;
     } else if (visible == PRESET_BROWSER) {
         bits = 1U << white_keys[preset_slot];
     } else if (visible == MIX) {
+        /* Playing tracks are lit, muted ones double flash, solos blink fast. */
         for (unsigned t = 0; t < 8; ++t) {
-            if (frame_views[t].muted ? dbl : 1) bits |= 1U << white_keys[t];
+            if (frame_views[t].muted ? dbl : 1U) bits |= 1U << white_keys[t];
             if (frame_views[t].solo && fast) bits |= 1U << white_keys[t + 8];
         }
-    } else
-        for (unsigned key = 0; key < 27; ++key)
-            if (key_note[key] != 0xff)
-                bits |= 1U << key;
+    }
+    for (unsigned key = 0; key < 27; ++key)
+        if (key_note[key] != 0xff) bits |= 1U << key;
     if (visible == FM_EDIT) {
         for (unsigned i = 0; i < 10; ++i) bits &= ~(1U << edit_keys[i]);
         for (unsigned i = 0; i < 6; ++i)
@@ -1099,23 +1091,21 @@ static void leds(const struct groove_view *v, unsigned visible)
     led_cache = bits;
     unsigned any_mute = 0;
     for (unsigned t = 0; t < 8; ++t) any_mute |= frame_views[t].muted | frame_views[t].solo;
-    unsigned paused = !v->playing && !groove_sequence_rewound();
-    unsigned beat = v->playing && (bar_step & 3U) == 0 && phase < (bar_step == 0 ? 170U : 85U);
-    unsigned roll = groove_arp_enabled(track) != 0 && (v->playing ? phase < 128U : 1U);
+    unsigned beat = v->playing ? (v->play_step & 3U) == 0 && phase < ((v->play_step & 15U) ? 85U : 170U)
+                               : !groove_sequence_rewound() && slow;
     bits = ((step_pages ? first > 0 : octave < 0) << OCT_DOWN)
         | ((step_pages ? first + 16 < v->sequence_length : octave > 0) << OCT_UP)
         | ((visible == PRESET_BROWSER) << HOME) | ((visible == EFFECTS) << FX)
-        | (roll << ARP)
+        | ((groove_arp_enabled(track) != 0 && (!v->playing || phase < 128U)) << ARP)
         | ((visible == FM_EDIT && (fm_group == 4 || fm_group == 5)) << SCL)
         | ((visible == STEPS || visible == ACTIONS || visible == STEP_EDIT || visible == RHYTHM || visible == DRUM) << SEQ)
-        | ((writing ? fast : 0U) << REC)
-        | ((v->playing ? beat : paused ? slow : 0U) << PLAY)
-        | ((visible == MIX ? 1U : any_mute ? dbl : 0U) << GLO)
+        | ((writing && fast) << REC) | (beat << PLAY)
+        | ((visible == MIX || (any_mute && dbl)) << GLO)
         | ((visible == FM_EDIT || visible == TONE_EDIT || visible == FM_QUICK || visible == STEP_EDIT ||
-            (visible == DRUM && dp_edit_down && two)) << EDIT)
+            (dp_edit_down && two)) << EDIT)
         | ((visible == FM_ENV) << ENV) | ((visible == FM_LFO) << LFO)
-        | ((visible == PROJECT || visible == SOURCE || (visible == ACTIONS && action_confirm) ? 1U
-            : groove_project_dirty() ? slow : 0U) << SAVE);
+        | ((visible == PROJECT || visible == SOURCE || (visible == ACTIONS && action_confirm) ||
+            (groove_project_dirty() && slow)) << SAVE);
     changed = bits ^ button_led_cache;
     for (unsigned key = 0; key < 14; ++key)
         if (changed & (1U << key)) fm1_led_set(key, (bits >> key) & 1U);
