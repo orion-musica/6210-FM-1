@@ -142,7 +142,7 @@ The FM-1's lights are on or off, so every state has a rhythm instead of a bright
 - **Slots.** 16 project slots, as in FM1 Open: the Flash user area is full (projects, sample bank, voice
   library), so more slots would cost sample memory. Export projects to the computer to keep more.
 - **Lights.** No dimming on the panel, hence the blink codes.
-- **Flash.** The application has to fit in 453,921 bytes. Removing the synth editors in 0.2 freed about 7 KB.
+- **Flash.** The application has to fit in 453,921 bytes. 0.2 BETA uses 442,760, so about 11 KB is free for new features.
 - **Ideas not in 0.2** (from the design): ghost notes, hypno drift, dark-club VU on the keys, stutter.
   They need more flash space than is left.
 
