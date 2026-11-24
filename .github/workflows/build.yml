@@ -84,7 +84,10 @@ jobs:
 
   pages:
     needs: build
-    if: github.event.repository.private == false && github.ref == 'refs/heads/main'
+    # Needs Settings > Pages > Source: GitHub Actions. Until Pages is switched on
+    # this job fails on its own without marking the firmware build as failed.
+    if: github.ref == 'refs/heads/main'
+    continue-on-error: true
     runs-on: ubuntu-latest
     permissions:
       pages: write
