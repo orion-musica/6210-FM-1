@@ -1,0 +1,22 @@
+# EDIT held on the DRUM page shows the kit box; SAVE reloads the 6210 kit.
+boot
+wait 300
+button 6 1
+wait 100
+shot edit-held
+tap 9
+button 6 0
+wait 200
+shot kit-reloaded
+# The project has unsaved edits: SAVE blinks once a second.
+wait 1000
+# REC blinks fast while recording.
+tap 13
+wait 30
+shot rec
+tap 13
+# GLO tap opens the mixer: muted tracks double flash, playing ones are lit.
+tap 7
+wait 100
+shot mixer
+tap 7
