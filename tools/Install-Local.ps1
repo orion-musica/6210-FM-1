@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-only WITH GPL-3.0-linking-exception
-# 6210: one-click local install.
+# Drum Peter: one-click local install.
 # 1. finds the JieLi toolchain   2. builds the firmware and the installer page
 # 3. starts a local server and opens the installer in Chrome or Edge.
-# Run from INSTALL-6210.bat in the repository root.
+# Run from INSTALL-DRUM-PETER.bat in the repository root.
 [CmdletBinding()]
 param(
     [switch]$SkipBuild,
@@ -22,7 +22,7 @@ function Stop-WithMessage($text) {
 }
 
 Say ''
-Say '  6210 Drum Peter - local install' 'Green'
+Say '  Drum Peter - local install' 'Green'
 Say '  --------------------' 'DarkGray'
 Say ''
 
@@ -61,13 +61,13 @@ if (-not $SkipBuild) {
     }
     if ([string]::IsNullOrWhiteSpace($source)) {
         Say ''
-        Say 'Enter the GitHub repository address (for example https://github.com/orion-musica/6210-FM-1).'
+        Say 'Enter the GitHub repository address (for example https://github.com/orion-musica/DRUM-PETER).'
         Say 'No repository yet? Press Enter to use a placeholder address for a local test.'
         $answer = Read-Host 'Address'
         if ($answer -match '^https://github\.com/[^/\s]+/[^/\s]+') {
             $source = ($answer.TrimEnd('/')) + '/archive/refs/heads/main.zip'
         } else {
-            $source = 'https://github.com/orion-musica/6210-FM-1/archive/refs/heads/main.zip'
+            $source = 'https://github.com/orion-musica/DRUM-PETER/archive/refs/heads/main.zip'
             Say 'Placeholder address: build again with the real address before you publish.' 'Yellow'
         }
     }

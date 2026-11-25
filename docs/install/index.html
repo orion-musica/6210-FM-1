@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Install 6210 Drum Peter on the M-VAVE FM-1 — installer</title>
-<meta name="description" content="Installer page for 6210 Drum Peter, free open-source 808 + 909 + 303 drum machine firmware for the M-VAVE FM-1. Requirements, steps, downloads and the way back to stock V15.">
+<title>Install Drum Peter on the M-VAVE FM-1 — installer</title>
+<meta name="description" content="Installer page for Drum Peter, free open-source 808 + 909 + 303 drum machine firmware for the M-VAVE FM-1. Requirements, steps, downloads and the way back to stock V15.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -69,7 +69,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
 <body>
 <nav aria-label="Main">
   <div class="wrap">
-    <a class="brand" href="../">6210 DRUM PETER</a>
+    <a class="brand" href="../">DRUM PETER</a>
     <div class="links">
       <a href="#install">Install</a><a href="#steps">Steps</a><a href="../manual/">Manual</a><a href="#downloads">Files</a><a href="#stock">Back to stock</a><a href="#help">Help</a>
     </div>
@@ -79,9 +79,9 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
 <header class="hero">
   <div class="wrap">
     <p class="kicker">INSTALLER · M-VAVE FM-1</p>
-    <h1>Install 6210</h1>
+    <h1>Install Drum Peter</h1>
     <p class="lead">Free, open-source drum machine firmware for the FM-1: 808, 909 and 303 on one panel. Everything happens in your browser over USB-MIDI: no drivers, no apps. The original V15 firmware is built into the installer, so you can always go back.</p>
-    <div class="warn"><strong>BETA 0.2 · tested on hardware.</strong> Every 6210 build is tested on an original M-VAVE FM-1 (FCC ID: 2ARCP-FM1), and testing on the device goes on with every release. It is still a beta: you install it at your own risk. Back up first and keep the FM-1 powered and connected until the installer says it is done.</div>
+    <div class="warn"><strong>BETA 0.2 · tested on hardware.</strong> Every Drum Peter build is tested on an original M-VAVE FM-1 (FCC ID: 2ARCP-FM1), and testing on the device goes on with every release. It is still a beta: you install it at your own risk. Back up first and keep the FM-1 powered and connected until the installer says it is done.</div>
   </div>
 </header>
 
@@ -113,7 +113,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
         </ul>
         <h3 style="margin-top:22px">This build</h3>
         <dl class="facts">
-          <dt>FILE</dt><dd>6210.fwsc</dd>
+          <dt>FILE</dt><dd>drum-peter.fwsc</dd>
           <dt>SIZE</dt><dd id="f-size">–</dd>
           <dt>BUILT</dt><dd id="f-date">–</dd>
           <dt>SHA-256</dt><dd id="f-hash">–</dd>
@@ -144,7 +144,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
       <li><div><h3>Connect</h3><p>Switch the FM-1 on, plug in the USB cable, press <b>START INSTALLER</b>, then <b>Connect device</b>. Allow MIDI / SysEx.</p></div></li>
       <li><div><h3>First time from stock V15</h3><p>The installer sees <code>FM-1_015</code>. Click <b>Enable force flash and reconnect</b>. This only reconnects; nothing is written yet. Coming from FM1 Open? Skip this step.</p></div></li>
       <li><div><h3>Install</h3><p>Tick the backup confirmation, click <b>Force flash</b> (or <b>Install</b>) and accept the warning. Do not unplug or switch off while it writes.</p></div></li>
-      <li><div><h3>Check samples and play</h3><p>Wait for the sample check to finish. If samples are not ready, restore the sample bank in <b>Projects &amp; sounds</b>; do not flash again. The FM-1 restarts into the 6210 boot screen. On an empty project the 6210 kit is ready to play.</p></div></li>
+      <li><div><h3>Check samples and play</h3><p>Wait for the sample check to finish. If samples are not ready, restore the sample bank in <b>Projects &amp; sounds</b>; do not flash again. The FM-1 restarts into the Drum Peter boot screen. On an empty project the Drum Peter kit is ready to play.</p></div></li>
     </ol>
   </div>
 </section>
@@ -154,12 +154,12 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
     <h2>Files</h2>
     <p class="sub">Everything is open. Check the firmware against its SHA-256 before installing by hand.</p>
     <div class="grid3">
-      <a class="card" href="flasher.html"><h3>Web installer</h3><span class="d">One HTML file with 6210 and stock V15 inside. Save it to install offline.</span></a>
-      <a class="card" href="../downloads/6210.fwsc" download><h3>6210.fwsc</h3><span class="d">The firmware package on its own.</span></a>
+      <a class="card" href="flasher.html"><h3>Web installer</h3><span class="d">One HTML file with Drum Peter and stock V15 inside. Save it to install offline.</span></a>
+      <a class="card" href="../downloads/drum-peter.fwsc" download><h3>drum-peter.fwsc</h3><span class="d">The firmware package on its own.</span></a>
       <a class="card" href="../downloads/SHA256SUMS.txt"><h3>SHA256SUMS</h3><span class="d">Checksum of the firmware package.</span></a>
       <a class="card" href="../manual/"><h3>Manual</h3><span class="d">Every control, screen and blink code, step by step.</span></a>
       <a class="card" id="src" href="../#build"><h3>Source code</h3><span class="d">Full source, GPL-3.0 with the SDK linking exception.</span></a>
-      <a class="card" href="../"><h3>About 6210</h3><span class="d">What it is, screens and features.</span></a>
+      <a class="card" href="../"><h3>About Drum Peter</h3><span class="d">What it is, screens and features.</span></a>
     </div>
   </div>
 </section>
@@ -168,7 +168,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
   <div class="wrap">
     <h2>Back to stock</h2>
     <p class="sub" style="margin-bottom:14px">Changed your mind? Open the installer and click <b>Restore original V15</b>. It installs the original firmware and restores all 128 factory voices across four banks.</p>
-    <div class="warn">6210 projects and samples do not work on stock firmware. Export them first. To come back to 6210 later, use force flash again.</div>
+    <div class="warn">Drum Peter projects and samples do not work on stock firmware. Export them first. To come back to Drum Peter later, use force flash again.</div>
   </div>
 </section>
 
@@ -178,7 +178,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
     <details><summary>The browser does not find the FM-1</summary><p>Close other MIDI apps and installer tabs, switch the FM-1 off and on, reconnect USB and click Connect again. Open Connection details in the installer to see which MIDI ports the browser found.</p></details>
     <details><summary>START is greyed out</summary><p>The ready check shows why. Wrong browser: use desktop Chrome or Edge (Safari, Firefox and phones have no Web MIDI). Opened as a file: run <code>OPEN-SITE.bat</code> so the page runs on localhost.</p></details>
     <details><summary>The update stopped halfway</summary><p>Keep the cable in, power-cycle the FM-1, reconnect and run the installer again with force flash.</p></details>
-    <details><summary>It says NOT BUILT</summary><p>The firmware has to be compiled once. On Windows run <code>INSTALL-6210.bat</code> in the project folder. It builds 6210 and opens this page on <code>http://localhost:8766</code>.</p></details>
+    <details><summary>It says NOT BUILT</summary><p>The firmware has to be compiled once. On Windows run <code>INSTALL-DRUM-PETER.bat</code> in the project folder. It builds Drum Peter and opens this page on <code>http://localhost:8766</code>.</p></details>
     <details><summary>Will I lose my projects?</summary><p>An update with the same storage layout keeps valid project slots and the sample bank. Switching from stock V15 does not. Back up either way.</p></details>
   </div>
 </section>
@@ -186,7 +186,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
 
 <footer>
   <div class="wrap">
-    <span>6210 Drum Peter by BULØKE · code written together with Claude · built on FM1 Open</span>
+    <span>Drum Peter by BULØKE · code written together with Claude · built on FM1 Open</span>
     <span>GPL-3.0 · not affiliated with M-VAVE · no phone maker's logo or name is used</span>
   </div>
 </footer>
@@ -218,7 +218,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
   }
   var state, note, start = $('start');
   if (!built) {
-    state = 'NOT BUILT'; note = 'Compile once with INSTALL-6210.bat (see Help).';
+    state = 'NOT BUILT'; note = 'Compile once with INSTALL-DRUM-PETER.bat (see Help).';
   } else if (!midi || mobile) {
     state = 'WRONG BROWSER'; note = 'Open this page in desktop Chrome or Edge.';
   } else if (!secure) {

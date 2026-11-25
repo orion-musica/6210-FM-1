@@ -1,29 +1,29 @@
 <div align="center">
 
-# 6210 Drum Peter
+# Drum Peter
 
 **A drum machine firmware for the M-VAVE FM-1: 808, 909, 606 and 707 kits, eight built-in songs, TR-style step keys and button lights that blink with a purpose.**
 
-[![build](https://github.com/orion-musica/6210-FM-1/actions/workflows/build.yml/badge.svg)](https://github.com/orion-musica/6210-FM-1/actions/workflows/build.yml)
+[![build](https://github.com/orion-musica/DRUM-PETER/actions/workflows/build.yml/badge.svg)](https://github.com/orion-musica/DRUM-PETER/actions/workflows/build.yml)
 ![license](https://img.shields.io/badge/license-GPL--3.0%20%2B%20SDK%20exception-43523d)
 ![device](https://img.shields.io/badge/device-M--VAVE%20FM--1-43523d)
 ![status](https://img.shields.io/badge/status-beta%200.2-c7a800)
 
-[**Website & web installer**](https://orion-musica.github.io/6210-FM-1/) ·
-[Manual](https://orion-musica.github.io/6210-FM-1/manual/) ·
+[**Website & web installer**](https://orion-musica.github.io/DRUM-PETER/) ·
+[Manual](https://orion-musica.github.io/DRUM-PETER/manual/) ·
 [Install](#installation) ·
 [Quick start](#quick-start) ·
 [Build](#building-from-source) ·
 [License](#license)
 
-<img src="docs/assets/drum-playing.png" width="360" alt="6210 DRUM page: track 1, the 808 kit, playing song 1 at 132 BPM, eleven drum rows and sixteen steps">
+<img src="docs/assets/drum-playing.png" width="360" alt="Drum Peter DRUM page: track 1, the 808 kit, playing song 1 at 132 BPM, eleven drum rows and sixteen steps">
 
 </div>
 
 ---
 
 > [!WARNING]
-> **6210 is a beta, tested on hardware.** Every build is tested on an original M-VAVE FM-1
+> **Drum Peter is a beta, tested on hardware.** Every build is tested on an original M-VAVE FM-1
 > (FCC ID: 2ARCP-FM1), and testing on the device goes on with every release. Each build also passes
 > host tests that run its real screen code. Back up your projects, voices and samples before installing.
 > The web installer can always put the original V15 firmware back.
@@ -44,14 +44,14 @@
 
 ## What it is
 
-One drum machine, one job: special tasks for my brother. 6210 is a fork of
+One drum machine, one job: special tasks for my brother. Drum Peter is a fork of
 [3310](https://github.com/orion-musica/3310_FM-1), itself built on M-VAVE's official
 [FM1 Open V14](https://github.com/m-vave/fm1_open). It keeps the two-tone phone-style screen of 3310
 and turns the instrument into a drum machine only: four kits on four tracks, one row per drum,
 sixteen steps, the white keys as step buttons and the black keys as drum pads.
 
 The sequencer and the sound engines are M-VAVE's FM1 Open library, so timing stays sample accurate.
-6210 changes the app layer only: the DRUM page, the LED logic, the start screen, the kits, the songs and the
+Drum Peter changes the app layer only: the DRUM page, the LED logic, the start screen, the kits, the songs and the
 project menu. The DX7, 303, PSG and pluck editors of FM1 Open are compiled out to make room.
 
 ## Features
@@ -71,13 +71,13 @@ project menu. The DX7, 303, PSG and pluck editors of FM1 Open are compiled out t
 ## Installation
 
 1. **Back up.** Export the projects, voices and samples you want to keep.
-2. **Open the installer** at <https://orion-musica.github.io/6210-FM-1/install/> in desktop **Chrome or Edge**.
+2. **Open the installer** at <https://orion-musica.github.io/DRUM-PETER/install/> in desktop **Chrome or Edge**.
 3. **Connect** the FM-1 with a USB data cable, press **START INSTALLER**, then **Connect device**, and allow MIDI / SysEx.
 4. **From stock V15** the first time: click **Enable force flash and reconnect**.
 5. **Install** and keep the FM-1 connected until the installer says it is done.
 
-The firmware file is also attached to every [release](https://github.com/orion-musica/6210-FM-1/releases)
-as `6210.fwsc`, with its SHA-256. To go back, open the installer and choose **Restore original V15**.
+The firmware file is also attached to every [release](https://github.com/orion-musica/DRUM-PETER/releases)
+as `drum-peter.fwsc`, with its SHA-256. To go back, open the installer and choose **Restore original V15**.
 
 ## Quick start
 
@@ -90,7 +90,7 @@ as `6210.fwsc`, with its SHA-256. To go back, open the installer and choose **Re
 5. Turn **K2** for the velocity of the step you touched last, **K3** for its chance, **K4** to tune the drum.
 6. Press **SAVE** for the project menu: 1 save, 2 load saved, 3 load template (the 8 songs), 4 new project.
 
-The [manual](https://orion-musica.github.io/6210-FM-1/manual/) explains every control and page.
+The [manual](https://orion-musica.github.io/DRUM-PETER/manual/) explains every control and page.
 
 ## Controls
 
@@ -157,20 +157,20 @@ Every push to `main` runs [`.github/workflows/build.yml`](.github/workflows/buil
 1. **host-test** (Linux): compiles the real app and screen code with the browser engine, plays the
    panel scripts in `tools/host/tests` and keeps the screenshots as an artifact.
 2. **build** (Windows): installs the JieLi toolchain 2.5.3, builds the firmware, the web installer and the
-   site, and uploads them as the `6210` artifact.
+   site, and uploads them as the `drum-peter` artifact.
 3. **pages**: publishes `docs/` to GitHub Pages (public repository, Pages source set to *GitHub Actions*).
-4. **release**: on a tag such as `v0.2.0-beta`, publishes a GitHub Release with `6210.fwsc`.
+4. **release**: on a tag such as `v0.2.0-beta`, publishes a GitHub Release with `drum-peter.fwsc`.
 
 ### On Windows
 
 Requires PowerShell, `curl.exe`, `tar.exe` and the
 [JieLi Windows toolchain 2.5.3](https://jl-update.oss-cn-shenzhen.aliyuncs.com/2.5.3.exe).
-Double-click `INSTALL-6210.bat`: it finds the toolchain, builds everything and opens the installer on
+Double-click `INSTALL-DRUM-PETER.bat`: it finds the toolchain, builds everything and opens the installer on
 `http://localhost:8766`. By hand:
 
 ```powershell
 $env:FM1_PI32_TOOLCHAIN = 'C:\JL\pi32'
-$env:FM1_SOURCE_URL = 'https://github.com/orion-musica/6210-FM-1/archive/refs/heads/main.zip'
+$env:FM1_SOURCE_URL = 'https://github.com/orion-musica/DRUM-PETER/archive/refs/heads/main.zip'
 .\tools\Make-Site.ps1        # firmware + installer + site in docs\
 .\tools\Build-Web.ps1 -LocalPreview   # browser preview only
 ```
@@ -190,17 +190,17 @@ Test scripts are plain text; see the commands at the top of [`tools/host/harness
 
 | Path | Contents |
 |---|---|
-| `app/drum.inc` | **6210:** DRUM page, keyboard, kits, songs, project menu |
-| `app/screen.c` | Screen and panel code (6210 LED blink codes, start screen, hooks) |
+| `app/drum.inc` | **Drum Peter:** DRUM page, keyboard, kits, songs, project menu |
+| `app/screen.c` | Screen and panel code (Drum Peter LED blink codes, start screen, hooks) |
 | `app/`, `web/`, `third_party/` | FM1 Open application and browser engine sources |
 | `sdk/` | FM1 Open SDK: binary engine, build and packaging scripts |
-| `tools/host/` | **6210:** native host test harness and scripts |
+| `tools/host/` | **Drum Peter:** native host test harness and scripts |
 | `tools/Make-Site.ps1`, `tools/ci/` | Site build and cloud toolchain setup |
 | `docs/` | Website: landing page, installer page, manual |
 
 ## Credits
 
-- **6210 Drum Peter** by BULØKE (orion-musica). Code written together with Claude.
+- **Drum Peter** by BULØKE (orion-musica). Code written together with Claude.
 - Built on **[FM1 Open](https://github.com/m-vave/fm1_open)** by M-VAVE, via **3310**.
 - Third-party components and their licenses: [`THIRD_PARTY.md`](THIRD_PARTY.md).
 

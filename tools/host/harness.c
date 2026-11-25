@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only WITH GPL-3.0-linking-exception
- * 6210 host test harness.
+ * Drum Peter host test harness.
  *
  * Links the real app and screen code with the browser simulator platform
  * (web/engine/Simulator.c) as a native program, then plays a script of panel

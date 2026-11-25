@@ -1,7 +1,7 @@
-# 6210 Drum Peter: test, build the firmware and the installer site in the cloud.
+# Drum Peter: test, build the firmware and the installer site in the cloud.
 # Runs on every push to main, on version tags (v*), or by hand:
 # Actions > build > Run workflow.
-# Result: the "6210" download (firmware, installer, checksum). On a public
+# Result: the "drum-peter" download (firmware, installer, checksum). On a public
 # repository with Pages set to "GitHub Actions", also the live site.
 # A tag such as v0.1.0-beta also publishes a GitHub Release with the firmware.
 name: build
@@ -50,7 +50,7 @@ jobs:
         timeout-minutes: 40
         run: ./tools/ci/Install-JieLi.ps1
 
-      - name: Build 6210 (firmware + installer + site)
+      - name: Build Drum Peter (firmware + installer + site)
         shell: pwsh
         timeout-minutes: 30
         run: |
@@ -67,12 +67,12 @@ jobs:
           $all = & $nm --print-size --size-sort --radix=d $elf
           Write-Host '--- 100 largest symbols ---'
           $all | Select-Object -Last 100 | ForEach-Object { Write-Host $_ }
-          Write-Host '--- 6210 / screen symbols ---'
+          Write-Host '--- Drum Peter / screen symbols ---'
           $all | Select-String 'dp_|boot_draw|screen|paint|draw|text|glyph|font|leds' | Select-Object -Last 80 | ForEach-Object { Write-Host $_ }
 
       - uses: actions/upload-artifact@v4
         with:
-          name: '6210'
+          name: 'drum-peter'
           path: |
             docs/downloads/
             docs/install/flasher.html
@@ -108,7 +108,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: '6210'
+          name: 'drum-peter'
           path: dist
       - name: Publish the release
         env:
@@ -118,8 +118,8 @@ jobs:
           pre=""
           case "$tag" in *-*) pre="--prerelease" ;; esac
           gh release create "$tag" --repo "$GITHUB_REPOSITORY" $pre \
-            --title "6210 Drum Peter $tag" \
+            --title "Drum Peter $tag" \
             --notes-file <(printf '%s\n\n%s\n' \
               "Firmware for the M-VAVE FM-1. Install it with the web installer (Chrome or Edge) or with the M-VAVE workbench." \
               "SHA-256: $(cut -d' ' -f1 dist/downloads/SHA256SUMS.txt)") \
-            dist/downloads/6210.fwsc dist/downloads/SHA256SUMS.txt dist/downloads/6210_README.md
+            dist/downloads/drum-peter.fwsc dist/downloads/SHA256SUMS.txt dist/downloads/drum-peter_README.md

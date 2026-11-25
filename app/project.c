@@ -582,7 +582,7 @@ int groove_project_save_slot(unsigned slot)
     }
     return r;
 }
-/* 6210: forget one saved project. Recovery first finishes any pending copy,
+/* Drum Peter: forget one saved project. Recovery first finishes any pending copy,
  * so the staging sector only repeats data that is already in its target and
  * can be cleared with the slot. Slot 16 also keeps the device settings: there
  * the record is rewritten as settings only. */

@@ -5,7 +5,7 @@
 #include "fm1_engine_control.h"
 #include <string.h>
 enum {
-    /* 6210: two-tone monochrome LCD. Light green-grey ground, dark pixels. */
+    /* Drum Peter: two-tone monochrome LCD. Light green-grey ground, dark pixels. */
     BACK = 0xc79b,   /* LCD ground  #c7f0d8 */
     PANEL = 0xaeb7,  /* off cells   #aed4ba */
     TEXT = 0x4287,   /* pixels      #43523d */
@@ -130,9 +130,9 @@ static void text(unsigned x, unsigned y, const char *s, unsigned scale, uint16_t
 enum { OVERVIEW, STEPS, FM_EDIT, FM_ENV, FM_LFO, TONE_EDIT, MIX, BLE, PROJECT, NAME, EFFECTS, SOURCE, ACTIONS, STEP_EDIT, RHYTHM, FM_QUICK, PRESET_BROWSER, ARP_EDIT, STARTUP, DRUM, FILES };
 enum { OCT_DOWN, OCT_UP, FX, SCL, ENV, LFO, EDIT, GLO, HOME, SAVE, ARP, SEQ, PLAY, REC };
 #define BUTTON(b) (1U << (b))
-/* 6210 DRUM page (drum.inc). */
+/* Drum Peter DRUM page (drum.inc). */
 struct groove_view;
-#define DP_DX7(t) 0 /* 6210 has no synth editors: DX7, 303, PSG and pluck pages are compiled out. */
+#define DP_DX7(t) 0 /* Drum Peter has no synth editors: DX7, 303, PSG and pluck pages are compiled out. */
 static void dp_init(void);
 static void dp_draw(const struct groove_view v[8]);
 static unsigned dp_phase(const struct groove_view *v);
@@ -142,7 +142,7 @@ static void dp_menu_draw(void);
 static unsigned dp_item, dp_confirm, dp_delete; /* project menu entry, YES / NO asked, delete asked */
 static void dp_delete_draw(void);
 static unsigned preset_lock; /* bank fixed when the browser comes from the project menu */
-static const uint16_t colors[8] = {0x4287, 0x4287, 0x4287, 0x4287, 0x4287, 0x4287, 0x4287, 0x4287}; /* 6210: one ink */
+static const uint16_t colors[8] = {0x4287, 0x4287, 0x4287, 0x4287, 0x4287, 0x4287, 0x4287, 0x4287}; /* Drum Peter: one ink */
 static const uint8_t white_keys[16] = {0, 2, 4, 6, 7, 9, 11, 12, 14, 16, 18, 19, 21, 23, 24, 26};
 /* FM1 EDIT key IDs 15,17,19,22,24,27,29,31,34,36 minus 14. */
 static const uint8_t edit_keys[10] = {1, 3, 5, 8, 10, 13, 15, 17, 20, 22};
@@ -233,7 +233,7 @@ static void project_refresh(void)
     } else project_stored_result = groove_project_info(project_slot, project_stored);
     project_drawn_revision = groove_project_revision();
 }
-/* 6210: the browser lists eight names at a time; read them once per refresh. */
+/* Drum Peter: the browser lists eight names at a time; read them once per refresh. */
 static char preset_names[16][13];
 static void preset_refresh(void)
 {
@@ -263,7 +263,7 @@ struct draw_cache {
     uint32_t header_cache, title_cache, middle_cache, hint_cache, hold_cache, seq_cache;
     uint32_t foot_cache[4], row_cache[8], middle_shape, cell_cache[8][16], tile_cache[16];
     unsigned meter_cache[8];
-    uint32_t hlv[16]; /* 6210 DRUM page, see drum.inc */
+    uint32_t hlv[16]; /* Drum Peter DRUM page, see drum.inc */
     uint8_t dp_state[12]; /* DRUM rows: playhead step and hit flash; [11] beat square */
 };
 static struct draw_cache saved_cache, band_cache, *cache = &saved_cache;
@@ -960,7 +960,7 @@ static __attribute__((noinline)) void preset_draw(void)
     cache->middle_cache = sig;
     paint_fill(0, 30, 240, 210, BACK);
     unsigned count = preset_bank ? 8U : 16U, first = preset_bank ? 0U : preset_slot & 8U;
-    text(8, 36, preset_bank ? "6210 SONGS" : first ? "USER 9-16" : "USER 1-8", 1, DIM, BACK);
+    text(8, 36, preset_bank ? "TEMPLATES" : first ? "USER 9-16" : "USER 1-8", 1, DIM, BACK);
     if (!preset_lock) text(150, 36, "K1 BANK", 1, DIM, BACK);
     for (unsigned i = 0; i < 8 && first + i < count; ++i) {
         unsigned slot = first + i, y = 48 + i * 20, on = slot == preset_slot;
@@ -1044,7 +1044,7 @@ static __attribute__((noinline)) void effects_draw(void)
         knob(i, label, display, colors[i]);
     }
 }
-/* 6210 blink codes. Every panel LED is on/off only, so each state has its
+/* Drum Peter blink codes. Every panel LED is on/off only, so each state has its
  * own rhythm instead of a brightness:
  *   step on              steady
  *   playhead             runs over the steps: an empty step lights for the
@@ -1234,7 +1234,7 @@ static __attribute__((noinline)) void edit_page_draw(unsigned visible)
     }
 }
 #ifndef FM1_HOST_TEST
-/* 6210 has no Bluetooth page, but the SDK build check requires the runtime
+/* Drum Peter has no Bluetooth page, but the SDK build check requires the runtime
  * entry points to stay linked: keep them referenced. */
 static void (*const ble_keep[])(void) = {
     (void (*)(void))fm1_ble_set_role, (void (*)(void))fm1_ble_scan, (void (*)(void))fm1_ble_connect,
@@ -1244,7 +1244,7 @@ static void (*const *volatile ble_keep_ref)(void);
 #endif
 static __attribute__((noinline, cold, minsize)) void boot_draw(void)
 {
-    /* 6210 boot: a classic phone standby screen. Signal bars on the left and
+    /* Drum Peter boot: a classic phone standby screen. Signal bars on the left and
      * battery bars on the right fill up while the engine starts. No logos. */
     if (cache->title_cache != 0) {
         cache->title_cache = 0;
@@ -1255,12 +1255,12 @@ static __attribute__((noinline, cold, minsize)) void boot_draw(void)
         paint_fill(12, 16, 2, 2, TEXT);
         frame(222, 14, 12, 16, TEXT);
         paint_fill(225, 11, 6, 3, TEXT);
-        text(72, 60, "6210", 4, TEXT, BACK);
-        text(60, 98, "DRUM PETER", 2, TEXT, BACK);
+        text(72, 52, "DRUM", 4, TEXT, BACK);
+        text(60, 86, "PETER", 4, TEXT, BACK);
         text(75, 122, "808 909 606 707", 1, DIM, BACK);
         text(96, 198, "MENU", 2, TEXT, BACK);
-        text((240 - 6 * (sizeof "6210 " DP_VERSION " / FM1 OPEN " FM1_RELEASE_VERSION - 1)) / 2, 226,
-             "6210 " DP_VERSION " / FM1 OPEN " FM1_RELEASE_VERSION, 1, DIM, BACK);
+        text((240 - 6 * (sizeof "DRUM PETER " DP_VERSION " / FM1 OPEN " FM1_RELEASE_VERSION - 1)) / 2, 226,
+             "DRUM PETER " DP_VERSION " / FM1 OPEN " FM1_RELEASE_VERSION, 1, DIM, BACK);
     }
     if (cache->middle_cache == boot_phase) return;
     cache->middle_cache = boot_phase;
@@ -1277,7 +1277,7 @@ static __attribute__((noinline, cold, minsize)) void boot_draw(void)
 }
 static void draw_page_body(const struct fm1_ble_status *ble)
 {
-    (void)ble; /* 6210 has no Bluetooth page */
+    (void)ble; /* Drum Peter has no Bluetooth page */
     unsigned visible = boot_active ? STARTUP : glo_down && glo_used ? MIX : page;
     if (visible != cache->shown_page) {
         cache->shown_page = visible;
@@ -1690,7 +1690,7 @@ void groove_screen_init(void)
 #ifndef FM1_HOST_TEST
     ble_keep_ref = ble_keep;
 #endif
-    page = music_page = DRUM; /* 6210 opens on the DRUM page. */
+    page = music_page = DRUM; /* Drum Peter opens on the DRUM page. */
     subpage_return = project_return = DRUM; rec_before_press = OVERVIEW;
     rec_down = rec_used = 0;
     selected_note = 60;
@@ -1752,7 +1752,7 @@ void groove_screen_init(void)
 static void select_track(int delta)
 {
     unsigned before = track;
-    track = (unsigned)clamp((int)track + delta, 0, 3); /* 6210: four drum tracks */
+    track = (unsigned)clamp((int)track + delta, 0, 3); /* Drum Peter: four drum tracks */
     if (page == FM_QUICK && !DP_DX7(track)) page = TONE_EDIT;
     if (page == TONE_EDIT && !advanced_edit && DP_DX7(track)) page = FM_QUICK;
     if ((!DP_DX7(track) && page == FM_EDIT) ||
@@ -1846,7 +1846,7 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
      * its editor is open. Leave editors that cannot apply to the new source. */
     if (page == NAME && !DP_DX7(track))
         page = DRUM;
-    /* 6210: EDIT on a saved project in the load list asks to delete it. */
+    /* Drum Peter: EDIT on a saved project in the load list asks to delete it. */
     if (dp_browser_gesture(controls, pressed, key_down & ~blocked_keys)) goto controls_done;
     if ((controls->buttons & (BUTTON(HOME) | BUTTON(SAVE))) == (BUTTON(HOME) | BUTTON(SAVE)) &&
         (pressed & (BUTTON(HOME) | BUTTON(SAVE)))) {
@@ -1910,9 +1910,9 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
             else if (0 && ble_forget == 1) ble_forget = 0;
             else if (page == DRUM) {
                 preset_lock = 0; preset_refresh(); project_result = 0; page = PRESET_BROWSER;
-            } else page = DRUM; /* 6210: DRUM replaces the old overview */
+            } else page = DRUM; /* Drum Peter: DRUM replaces the old overview */
         } else if (pressed & BUTTON(SEQ)) {
-            /* SEQ alternates DRUM (6210) and the step editor. */
+            /* SEQ alternates DRUM (Drum Peter) and the step editor. */
             if (page == DRUM) { page = STEPS; seq_page = 0; step_follow = 1; cache->shown_page = ~0U; }
             else page = DRUM;
         } else if (pressed & BUTTON(FX)) {
@@ -1970,7 +1970,7 @@ static int apply_controls(const struct fm1_controls *controls, uint32_t now,
         dp_menu_controls(controls, pressed, key_down & ~blocked_keys, now);
         goto controls_done;
     }
-    /* 6210: SAVE opens the project menu (save, load, new). */
+    /* Drum Peter: SAVE opens the project menu (save, load, new). */
     if ((pressed & BUTTON(SAVE)) && page != PROJECT && page != ACTIONS) {
         glo_down = 0; dp_menu_open();
         goto controls_done;
@@ -2460,7 +2460,7 @@ controls_done:
         memset(key_note, 0xff, sizeof key_note); project_keys = 0;
     }
     uint32_t keys = controls->keys & ~blocked_keys;
-    /* 6210: white keys are steps on the DRUM page; black keys pick drums. */
+    /* Drum Peter: white keys are steps on the DRUM page; black keys pick drums. */
     if (page == DRUM && !writing && !glo_down && !mode)
         keys = dp_keys(keys, key_down, controls->keys);
     /* EDIT's labelled black keys select OP1..6 / Pitch / Global / Mono / Poly;
@@ -2640,7 +2640,7 @@ unsigned groove_screen_preset_position(void)
 /* Web shortcuts enter the same editor and use the same parameter handlers. */
 int groove_screen_open(unsigned target)
 {
-    if (target == OVERVIEW) target = DRUM; /* 6210: the start page is DRUM. */
+    if (target == OVERVIEW) target = DRUM; /* Drum Peter: the start page is DRUM. */
     else if (target > ARP_EDIT || target == PROJECT) return -1;
     boot_active = 0;
     unsigned quick = target == FM_QUICK;

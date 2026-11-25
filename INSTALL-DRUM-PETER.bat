@@ -1,5 +1,5 @@
 @echo off
-rem 6210 Drum Peter - one-click local build and install (Windows).
+rem Drum Peter - one-click local build and install (Windows).
 rem Builds the firmware, then opens the web installer on http://localhost:8766
 setlocal
 cd /d "%~dp0"

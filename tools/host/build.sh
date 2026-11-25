@@ -1,6 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-only WITH GPL-3.0-linking-exception
-# 6210 host test: compile the real app + screen code natively with the
+# Drum Peter host test: compile the real app + screen code natively with the
 # browser simulator platform, run every script in tools/host/tests and save
 # PNG screenshots to build/host/. Needs clang (or gcc) and Python 3 with Pillow
 # for the pictures. Usage, from the repository root:  sh tools/host/build.sh

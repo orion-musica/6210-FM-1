@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-only WITH GPL-3.0-linking-exception
-# 6210: build the distribution package and refresh the site in docs/.
+# Drum Peter: build the distribution package and refresh the site in docs/.
 #   docs/install/flasher.html        official FM1 Open web installer with this firmware inside
-#   (docs/install/index.html is the 6210 installer page that checks the build and opens flasher.html)
-#   docs/downloads/6210.fwsc   the firmware package
-#   docs/downloads/6210_README.md    the README
+#   (docs/install/index.html is the Drum Peter installer page that checks the build and opens flasher.html)
+#   docs/downloads/drum-peter.fwsc   the firmware package
+#   docs/downloads/drum-peter_README.md    the README
 # Usage (PowerShell, from the repository root):
 #   $env:FM1_PI32_TOOLCHAIN = 'C:\JL\pi32'
 #   $env:FM1_SOURCE_URL = 'https://github.com/<user>/<repo>/archive/refs/heads/main.zip'
@@ -22,7 +22,7 @@ if ([string]::IsNullOrWhiteSpace($SourceUrl) -or -not $SourceUrl.StartsWith('htt
     throw 'Set FM1_SOURCE_URL to the HTTPS address of this repository''s source archive, for example https://github.com/<user>/<repo>/archive/refs/heads/main.zip'
 }
 
-Write-Host '6210: building the distribution package...'
+Write-Host 'Drum Peter: building the distribution package...'
 & (Join-Path $root 'sdk\Build.ps1') -Package -Toolchain $Toolchain -SourceUrl $SourceUrl
 
 $installer = Join-Path $root 'build\official-web\FM1-Official-Open-Source.html'
@@ -36,15 +36,15 @@ if ($text.Contains('Build incomplete')) { throw 'The installer page reports an i
 $docs = Join-Path $root 'docs'
 foreach ($dir in @('install', 'downloads')) { [IO.Directory]::CreateDirectory((Join-Path $docs $dir)) | Out-Null }
 Copy-Item -LiteralPath $installer -Destination (Join-Path $docs 'install\flasher.html') -Force
-Copy-Item -LiteralPath $firmware -Destination (Join-Path $docs 'downloads\6210.fwsc') -Force
-Copy-Item -LiteralPath (Join-Path $root 'README.md') -Destination (Join-Path $docs 'downloads\6210_README.md') -Force
+Copy-Item -LiteralPath $firmware -Destination (Join-Path $docs 'downloads\drum-peter.fwsc') -Force
+Copy-Item -LiteralPath (Join-Path $root 'README.md') -Destination (Join-Path $docs 'downloads\drum-peter_README.md') -Force
 $nojekyll = Join-Path $docs '.nojekyll'
 if (!(Test-Path -LiteralPath $nojekyll)) { [IO.File]::WriteAllText($nojekyll, '') }
 
-$hash = (Get-FileHash -LiteralPath (Join-Path $docs 'downloads\6210.fwsc') -Algorithm SHA256).Hash.ToLowerInvariant()
-[IO.File]::WriteAllText((Join-Path $docs 'downloads\SHA256SUMS.txt'), "$hash  6210.fwsc`n")
+$hash = (Get-FileHash -LiteralPath (Join-Path $docs 'downloads\drum-peter.fwsc') -Algorithm SHA256).Hash.ToLowerInvariant()
+[IO.File]::WriteAllText((Join-Path $docs 'downloads\SHA256SUMS.txt'), "$hash  drum-peter.fwsc`n")
 # The landing page reads this to show that the installer is ready (works from file:// too).
-$bytes = (Get-Item -LiteralPath (Join-Path $docs 'downloads\6210.fwsc')).Length
+$bytes = (Get-Item -LiteralPath (Join-Path $docs 'downloads\drum-peter.fwsc')).Length
 $stamp = (Get-Date).ToString('yyyy-MM-dd HH:mm')
 $info = "window.DP_BUILD = {built: true, sha256: '$hash', bytes: $bytes, date: '$stamp'};`n"
 [IO.File]::WriteAllText((Join-Path $docs 'assets\build-info.js'), $info)

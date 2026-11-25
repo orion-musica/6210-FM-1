@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-only WITH GPL-3.0-linking-exception
-# 6210: serve docs\ on http://localhost so Web MIDI works locally,
+# Drum Peter: serve docs\ on http://localhost so Web MIDI works locally,
 # then open the page in Chrome or Edge. Stop with Ctrl+C.
 [CmdletBinding()]
 param(
@@ -27,7 +27,7 @@ try { $listener.Start() } catch {
 
 $url = $prefix + $Page
 Write-Host ''
-Write-Host "6210 local server: $prefix"
+Write-Host "Drum Peter local server: $prefix"
 Write-Host "Opening $url"
 Write-Host 'Keep this window open while installing. Press Ctrl+C to stop.'
 Write-Host ''

@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only WITH GPL-3.0-linking-exception
- * 6210 Drum Peter - DRUM page, kits, songs and the project menu for FM1 Open
+ * Drum Peter - DRUM page, kits, songs and the project menu for FM1 Open
  * (two-tone LCD edition).
  *
  * Included once by screen.c, after its drawing helpers and before
@@ -208,7 +208,7 @@ static int dp_song_load(unsigned song)
     return 0;
 }
 /* A fresh start has an empty project (no notes on any track). The first time
- * 6210 sees one it loads song 1. A project with notes in it is never touched. */
+ * Drum Peter sees one it loads song 1. A project with notes in it is never touched. */
 static void dp_setup_once(void)
 {
     if (dp_setup_checked || boot_active) return;
@@ -540,7 +540,7 @@ static void dp_draw(const struct groove_view v[8])
             text(36, 8, pads ? dp_kit_name(track) : dp_source_short(sel->type), 2, BACK, sel->muted ? DIM : TEXT);
             number(84, 8, sel->tempo, 3, 2, TEXT, BACK);
             text(122, 15, groove_project_dirty() ? "BPM *" : "BPM  ", 1, DIM, BACK);
-            text(170, 8, "6210", 1, DIM, BACK);
+            text(156, 8, "DRUM PETER", 1, DIM, BACK);
             frame(220, 6, 16, 16, TEXT);
             paint_fill(223, 9, 10, 10, beat ? TEXT : BACK);
         }

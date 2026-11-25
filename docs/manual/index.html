@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>6210 Drum Peter — manual</title>
-<meta name="description" content="The complete manual for 6210 Drum Peter, drum machine firmware for the M-VAVE FM-1: panel, DRUM page, the 808/909/606/707 kits, songs, project menu, step editing, roll, mixer, blink codes and troubleshooting.">
+<title>Drum Peter — manual</title>
+<meta name="description" content="The complete manual for Drum Peter, drum machine firmware for the M-VAVE FM-1: panel, DRUM page, the 808/909/606/707 kits, songs, project menu, step editing, roll, mixer, blink codes and troubleshooting.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -47,7 +47,7 @@ footer{border-top:3px solid var(--ink);padding:24px;font-size:14px;color:var(--d
 <body>
 <nav aria-label="Main">
   <div class="bar">
-    <a class="brand" href="../">6210 DRUM PETER</a>
+    <a class="brand" href="../">DRUM PETER</a>
     <div class="links"><a href="../">Home</a><a href="../install/">Install</a><a href="#lights">Blink codes</a><a href="#help">Help</a></div>
   </div>
 </nav>
@@ -74,12 +74,12 @@ footer{border-top:3px solid var(--ink);padding:24px;font-size:14px;color:var(--d
 </aside>
 <main>
 <h1>Manual</h1>
-<p class="lead">6210 Drum Peter 0.2 BETA for the M-VAVE FM-1. Built on FM1 Open V14.</p>
+<p class="lead">Drum Peter 0.2 BETA for the M-VAVE FM-1. Built on FM1 Open V14.</p>
 <div class="box"><strong>Names used here.</strong> Buttons are written like <kbd>PLAY</kbd>. The seven encoders are <kbd>SELECT</kbd>, <kbd>ALGORITHM</kbd>, <kbd>PRESETS</kbd> and <kbd>K1</kbd>–<kbd>K4</kbd> (the four knobs under the screen). The keyboard has 16 white and 11 black keys.</div>
 
 <h2 id="start">1. First start</h2>
-<p>After installing, the FM-1 shows the 6210 start screen for about a second and then opens the <b>DRUM</b> page. Any key or knob skips the start screen.</p>
-<p>If the project in memory is empty (no notes on any track), 6210 loads <a href="#songs">song 1</a>, HYPNO 132, and shows <code>SONG 1 LOADED</code>. Press <kbd>PLAY</kbd> to hear it. A project that already has notes is never changed; the FM-1 always starts with the project you saved last.</p>
+<p>After installing, the FM-1 shows the Drum Peter start screen for about a second and then opens the <b>DRUM</b> page. Any key or knob skips the start screen.</p>
+<p>If the project in memory is empty (no notes on any track), Drum Peter loads <a href="#songs">song 1</a>, HYPNO 132, and shows <code>SONG 1 LOADED</code>. Press <kbd>PLAY</kbd> to hear it. A project that already has notes is never changed; the FM-1 always starts with the project you saved last.</p>
 <p>Nothing is written to memory until you save with <kbd>SAVE</kbd>. Until then the SAVE light blinks once a second.</p>
 
 <h2 id="panel">2. The panel</h2>
@@ -129,7 +129,7 @@ footer{border-top:3px solid var(--ink);padding:24px;font-size:14px;color:var(--d
 <p><kbd>K4</kbd> tunes the selected drum. For every other drum setting (decay, tone, snappy, drive, pan…) tap <kbd>EDIT</kbd>; see <a href="#sound">Sound editing</a>.</p>
 
 <h2 id="kit">5. Kits</h2>
-<p>6210 has four drum tracks, one kit each. <kbd>SELECT</kbd> moves between them; the header shows the kit.</p>
+<p>Drum Peter has four drum tracks, one kit each. <kbd>SELECT</kbd> moves between them; the header shows the kit.</p>
 <div class="table"><table>
 <thead><tr><th scope="col">Track</th><th scope="col">Kit</th><th scope="col">Character</th></tr></thead>
 <tbody>
@@ -139,7 +139,7 @@ footer{border-top:3px solid var(--ink);padding:24px;font-size:14px;color:var(--d
 <tr><td>T4</td><td>707</td><td>Round, punchy and clean</td></tr>
 </tbody></table></div>
 <figure><img src="../assets/kit-909.png" width="480" height="480" alt="DRUM page on track 2 with the 909 kit"><figcaption>Track 2, the 909 kit.</figcaption></figure>
-<p>All four kits use the FM1 Open DRUM 808 engine; the 909, 606 and 707 are settings of it. Change any drum with <kbd>EDIT</kbd>: your changes are saved with the project. Tracks 5–8 are switched off in 6210.</p>
+<p>All four kits use the FM1 Open DRUM 808 engine; the 909, 606 and 707 are settings of it. Change any drum with <kbd>EDIT</kbd>: your changes are saved with the project. Tracks 5–8 are switched off in Drum Peter.</p>
 
 <h2 id="songs">6. Songs</h2>
 <p>Eight songs are built into the firmware as templates. Load them from the <a href="#projects">project menu</a>: <kbd>SAVE</kbd>, key 3 (LOAD TEMPLATE).</p>
@@ -196,7 +196,7 @@ footer{border-top:3px solid var(--ink);padding:24px;font-size:14px;color:var(--d
 <figure><img src="../assets/delete.png" width="480" height="480" alt="Delete a saved project: delete it? YES / NO"><figcaption>Deleting asks first.</figcaption></figure>
 <h3>3 · Load template</h3>
 <p>The eight built-in <a href="#songs">songs</a>. A template replaces the current project; save it to keep your changes.</p>
-<figure><img src="../assets/songs.png" width="480" height="480" alt="Load template list with the eight 6210 songs"><figcaption>The templates.</figcaption></figure>
+<figure><img src="../assets/songs.png" width="480" height="480" alt="Load template list with the eight built-in songs"><figcaption>The templates.</figcaption></figure>
 <p><kbd>HOME</kbd> on the DRUM page opens the same list too; there <kbd>K1</kbd> switches between your saves and the templates.</p>
 <h3>4 · New project</h3>
 <p>Asks <code>CLEAR THE CURRENT PROJECT?</code> Key 1 or <kbd>SAVE</kbd> = YES, key 2 or <kbd>HOME</kbd> = NO. YES gives an empty project: the four kits with no steps, tempo 130, ARP off, nothing muted, tracks 5–8 off. Your saved slots are not touched, and <kbd>HOME</kbd> + <kbd>SAVE</kbd> undoes it.</p>
@@ -250,9 +250,9 @@ footer{border-top:3px solid var(--ink);padding:24px;font-size:14px;color:var(--d
 <h3>Hanging notes</h3>
 <p><kbd>HOME</kbd> + <kbd>PLAY</kbd> stops and silences everything.</p>
 <h3>Back to the original firmware</h3>
-<p>Open the <a href="../install/">installer</a> and choose <b>Restore original V15</b>. Export your projects and samples first: 6210 projects do not open on stock firmware.</p>
+<p>Open the <a href="../install/">installer</a> and choose <b>Restore original V15</b>. Export your projects and samples first: Drum Peter projects do not open on stock firmware.</p>
 </main>
 </div>
-<footer>6210 Drum Peter by BULØKE · built on FM1 Open · GPL-3.0 with the FM1 SDK linking exception · not affiliated with M-VAVE</footer>
+<footer>Drum Peter by BULØKE · built on FM1 Open · GPL-3.0 with the FM1 SDK linking exception · not affiliated with M-VAVE</footer>
 </body>
 </html>
