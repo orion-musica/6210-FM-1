@@ -23,8 +23,9 @@
 ---
 
 > [!WARNING]
-> **6210 is a beta.** It builds cleanly and passes host tests that run its real screen code, but it has
-> not been tested on many physical FM-1s yet. Back up your projects, voices and samples before installing.
+> **6210 is a beta, tested on hardware.** Every build is tested on an original M-VAVE FM-1
+> (FCC ID: 2ARCP-FM1), and testing on the device goes on with every release. Each build also passes
+> host tests that run its real screen code. Back up your projects, voices and samples before installing.
 > The web installer can always put the original V15 firmware back.
 
 ## Contents
