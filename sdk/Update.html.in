@@ -474,7 +474,7 @@ button{border-radius:7px;background:#223039;border-color:#3b4b54;color:#d6e3e6;f
   $('force-activate').addEventListener('click',()=>setForceMode(true,true));
   function packageDetails(){
     FM1I18n.text($('profile'),pkg.kind==='stock'?'原厂 V15（FM-1_015）':'官方 Open 固件');
-    $('firmware-version').textContent=pkg.release_version||'—';
+    $('firmware-version').textContent=pkg.release_version||'-';
     FM1I18n.text($('version'),pkg.kind==='stock'?'FM-1_015':pkg.build_id.slice(0,16));$('version').title=pkg.kind==='stock'?pkg.sha256:pkg.build_id;
     FM1I18n.text($('size'),(pkg.bytes/1024).toFixed(1)+' KiB');
   }
@@ -713,7 +713,7 @@ button{border-radius:7px;background:#223039;border-color:#3b4b54;color:#d6e3e6;f
       $('sample-bank-note').hidden=FM1_SIMULATOR.sample_bank!=='synthesized-demo';
       if(!FM1_PACKAGE){
         FM1I18n.text($('update-intro'),'本页缺少内置固件，无法烧录。请重新下载完整官方工作台。');
-        FM1I18n.text($('profile'),'网页试听与编辑');$('firmware-version').textContent=FM1_SIMULATOR.release_version||'—';FM1I18n.text($('version'),FM1_SIMULATOR.sha256.slice(0,16));FM1I18n.text($('size'),'未附带设备固件');
+        FM1I18n.text($('profile'),'网页试听与编辑');$('firmware-version').textContent=FM1_SIMULATOR.release_version||'-';FM1I18n.text($('version'),FM1_SIMULATOR.sha256.slice(0,16));FM1I18n.text($('size'),'未附带设备固件');
         status('内置固件不可用，请重新下载完整官方工作台。');
         $('backup').disabled=true;enable();return;
       }
